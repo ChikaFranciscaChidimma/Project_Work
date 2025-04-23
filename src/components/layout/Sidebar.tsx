@@ -56,10 +56,16 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
       allowedRoles: ["admin", "branch-manager"],
     },
     {
-      name: "Staff & Branches",
-      href: "/staff-branches",
+      name: "Staff",
+      href: "/staff",
       icon: Users,
       allowedRoles: ["admin", "branch-manager"],
+    },
+    {
+      name: "Branches",
+      href: "/branches",
+      icon: ClipboardList,
+      allowedRoles: ["admin"],
     },
     {
       name: "Settings",
