@@ -6,6 +6,7 @@ type Theme = "dark" | "light" | "system";
 interface ThemeContextProps {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  resolvedTheme: "dark" | "light"; // Add resolved theme for components
 }
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
@@ -17,30 +18,38 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
     return "system";
   });
+  
+  const [resolvedTheme, setResolvedTheme] = useState<"dark" | "light">("light");
 
-  useEffect(() => {
+  // Function to apply the theme to the document
+  const applyTheme = (newTheme: "dark" | "light") => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
+    root.classList.add(newTheme);
+    setResolvedTheme(newTheme);
+  };
 
+  // Apply theme when the component mounts or theme changes
+  useEffect(() => {
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
-      root.classList.add(systemTheme);
+      applyTheme(systemTheme);
     } else {
-      root.classList.add(theme);
+      applyTheme(theme as "dark" | "light");
     }
 
     localStorage.setItem("branchsync-theme", theme);
   }, [theme]);
 
+  // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = () => {
       if (theme === "system") {
         const systemTheme = mediaQuery.matches ? "dark" : "light";
-        document.documentElement.classList.remove("light", "dark");
-        document.documentElement.classList.add(systemTheme);
+        applyTheme(systemTheme);
       }
     };
 
@@ -49,7 +58,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
       {children}
     </ThemeContext.Provider>
   );
