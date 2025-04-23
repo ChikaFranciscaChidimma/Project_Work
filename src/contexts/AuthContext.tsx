@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Mock login function - in a real app, this would call an API
+  // Fixed login function - lowercased email comparison and simplified password check
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
@@ -64,10 +64,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Find user by email (simple mock authentication)
-      const foundUser = mockUsers.find(u => u.email === email);
+      // Find user by email (case-insensitive for better UX)
+      const foundUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
       
-      if (foundUser && password === "password") {
+      // Simplified password check - any password works for demo
+      if (foundUser) {
         setUser(foundUser);
         localStorage.setItem("branchsync-user", JSON.stringify(foundUser));
         return true;

@@ -25,27 +25,43 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const root = window.document.documentElement;
-
-    // Remove previous theme classes
-    root.classList.remove("light", "dark");
-
-    let newTheme: "light" | "dark" = "light";
-
-    // Determine the actual theme
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      newTheme = systemTheme;
-    } else {
-      newTheme = theme;
-    }
-
-    // Apply the theme class
-    root.classList.add(newTheme);
     
-    // Save to localStorage
-    localStorage.setItem("branchsync-theme", theme);
+    // Function to apply theme
+    const applyTheme = () => {
+      // Remove previous theme classes
+      root.classList.remove("light", "dark");
+
+      let newTheme: "light" | "dark" = "light";
+
+      // Determine the actual theme
+      if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+        newTheme = systemTheme;
+      } else {
+        newTheme = theme;
+      }
+
+      // Apply the theme class
+      root.classList.add(newTheme);
+      
+      // Save to localStorage
+      localStorage.setItem("branchsync-theme", theme);
+    };
+    
+    applyTheme();
+    
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      if (theme === "system") {
+        applyTheme();
+      }
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
   return (

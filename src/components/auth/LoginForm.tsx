@@ -6,9 +6,11 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
+import { useToast } from "@/components/ui/use-toast";
 
 const LoginForm = () => {
   const { login, isLoading } = useAuth();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,10 +25,26 @@ const LoginForm = () => {
       return;
     }
 
-    const success = await login(email, password);
-    
-    if (!success) {
-      setError("Invalid email or password");
+    try {
+      const success = await login(email, password);
+      
+      if (success) {
+        toast({
+          title: "Login successful",
+          description: "Welcome to BranchSync!",
+          variant: "default",
+        });
+      } else {
+        setError("Invalid email or password");
+        toast({
+          title: "Login failed",
+          description: "Please check your credentials and try again",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      setError("An error occurred during login. Please try again.");
+      console.error("Login error:", err);
     }
   };
 
@@ -118,7 +136,7 @@ const LoginForm = () => {
             <div>Admin: admin@branchsync.com</div>
             <div>Branch Manager: manager@branchsync.com</div>
             <div>Cashier: cashier@branchsync.com</div>
-            <div className="mt-1">Password: "password" for all users</div>
+            <div className="mt-1">Any password will work for demo</div>
           </div>
         </div>
       </form>
