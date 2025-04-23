@@ -61,7 +61,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+        // BranchSync Custom Colors
+        branchsync: {
+          primary: '#1A237E', // Deep Indigo / Navy Blue
+          secondary: '#00ACC1', // Teal / Soft Cyan
+          accent: '#FF7043', // Vibrant Orange
+          success: '#43A047', // Emerald Green
+          warning: '#FFA726', // Golden Amber
+          error: '#E53935', // Deep Red
+          background: '#FAFAFA', // Cloud White
+          'text-primary': '#212121', // Charcoal Grey
+          'text-secondary': '#757575', // Mid Grey
+        },
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
