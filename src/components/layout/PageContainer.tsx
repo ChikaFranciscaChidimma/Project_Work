@@ -2,7 +2,6 @@
 import { useState, ReactNode } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PageContainerProps {
   children: ReactNode;
@@ -10,7 +9,6 @@ interface PageContainerProps {
 
 const PageContainer = ({ children }: PageContainerProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -22,11 +20,9 @@ const PageContainer = ({ children }: PageContainerProps) => {
       <div className="flex flex-1">
         <Sidebar isOpen={sidebarOpen} />
         <main
-          className={`flex-1 px-4 py-6 lg:px-6 transition-all duration-300 ${
-            !isMobile && sidebarOpen ? "ml-64" : !isMobile ? "lg:ml-64" : ""
-          }`}
+          className="flex-1 px-4 py-6 lg:px-6 lg:ml-64 transition-all duration-300"
           onClick={() => {
-            if (isMobile && sidebarOpen) setSidebarOpen(false);
+            if (sidebarOpen) setSidebarOpen(false);
           }}
         >
           {children}
