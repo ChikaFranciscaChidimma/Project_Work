@@ -7,7 +7,7 @@ import {
   Box, 
   ClipboardList, 
   CreditCard, 
-  Home, 
+  Home,
   Settings, 
   ShoppingCart,
   Users
@@ -56,16 +56,10 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
       allowedRoles: ["admin", "branch-manager"],
     },
     {
-      name: "Staff",
-      href: "/staff",
+      name: "Staff & Branches",
+      href: "/management",
       icon: Users,
       allowedRoles: ["admin", "branch-manager"],
-    },
-    {
-      name: "Branches",
-      href: "/branches",
-      icon: ClipboardList,
-      allowedRoles: ["admin"],
     },
     {
       name: "Settings",
@@ -105,11 +99,6 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                   >
                     <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                     <span>{item.name}</span>
-                    {item.name === "Inventory" && (
-                      <span className="ml-auto bg-warning/20 text-warning px-2 py-0.5 rounded-full text-xs">
-                        3 Low
-                      </span>
-                    )}
                   </Link>
                 );
               })}
@@ -121,7 +110,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium mb-1 opacity-80">Logged in as:</p>
-                <p className="text-sm font-medium">{user?.role.replace('-', ' ')}</p>
+                <p className="text-sm font-medium capitalize">{user?.role.replace('-', ' ')}</p>
               </div>
             </div>
           </div>

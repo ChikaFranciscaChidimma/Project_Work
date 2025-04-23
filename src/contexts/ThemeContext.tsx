@@ -12,40 +12,40 @@ const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Try to get the theme from localStorage
     if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("branchsync-theme") as Theme;
-      if (savedTheme) {
-        return savedTheme;
-      }
+      return (localStorage.getItem("branchsync-theme") as Theme) || "system";
     }
-    // Default to system
     return "system";
   });
 
   useEffect(() => {
     const root = window.document.documentElement;
-
-    // Remove previous theme classes
     root.classList.remove("light", "dark");
 
-    let newTheme: "light" | "dark" = "light";
-
-    // Determine the actual theme
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
-      newTheme = systemTheme;
+      root.classList.add(systemTheme);
     } else {
-      newTheme = theme;
+      root.classList.add(theme);
     }
 
-    // Apply the theme class
-    root.classList.add(newTheme);
-    
-    // Save to localStorage
     localStorage.setItem("branchsync-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      if (theme === "system") {
+        const systemTheme = mediaQuery.matches ? "dark" : "light";
+        document.documentElement.classList.remove("light", "dark");
+        document.documentElement.classList.add(systemTheme);
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
   return (
