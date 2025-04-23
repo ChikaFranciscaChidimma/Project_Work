@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import POS from "./pages/POS";
 import NotFound from "./pages/NotFound";
+import ChatbotAssistant from "./components/chatbot/ChatbotAssistant";
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -47,11 +49,17 @@ const App = () => (
                   <POS />
                 </ProtectedRoute>
               } />
+              <Route path="/staff-branches" element={
+                <ProtectedRoute>
+                  <NotFound />
+                </ProtectedRoute>
+              } />
               
               {/* Add more protected routes as needed */}
               
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <ChatbotAssistant />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

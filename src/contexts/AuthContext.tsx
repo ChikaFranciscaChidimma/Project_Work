@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Find user by email (simple mock authentication)
-      const foundUser = mockUsers.find(u => u.email === email);
+      const foundUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
       
       if (foundUser && password === "password") {
         setUser(foundUser);
