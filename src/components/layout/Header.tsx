@@ -1,5 +1,4 @@
-
-import { Bell, Menu, MessageCircle, User } from "lucide-react";
+import { Bell, MessageCircle, User } from "lucide-react";
 import { ThemeToggle } from "../ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../ui/button";
@@ -8,13 +7,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from "../ui/badge";
 import { useState } from "react";
 
-interface HeaderProps {
-  toggleSidebar: () => void;
-}
-
-const Header = ({ toggleSidebar }: HeaderProps) => {
+const Header = () => {
   const { user, logout } = useAuth();
-  const [notificationCount, setNotificationCount] = useState(3); // Mock notifications count
+  const [notificationCount, setNotificationCount] = useState(3);
   
   const initials = user?.name
     ? user.name
@@ -22,22 +17,17 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
         .map((n) => n[0])
         .join("")
         .toUpperCase()
-    : "U";
+    : "A";
 
   return (
     <header className="bg-background border-b border-border h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden">
-          <Menu className="h-5 w-5" />
-        </Button>
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-xl text-primary">BranchSync</span>
-          {user?.branchName && (
-            <Badge variant="outline" className="ml-2 bg-secondary/10 text-secondary">
-              {user.branchName}
-            </Badge>
-          )}
-        </div>
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-xl text-primary">BranchSync</span>
+        {user?.branchName && (
+          <Badge variant="outline" className="ml-2 bg-secondary/10 text-secondary">
+            {user.branchName}
+          </Badge>
+        )}
       </div>
       
       <div className="flex items-center gap-2 sm:gap-4">
@@ -49,7 +39,7 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               {notificationCount > 0 && (
-                <span className="absolute top-0 right-0 h-4 w-4 bg-destructive text-white text-xs flex items-center justify-center rounded-full">
+                <span className="absolute top-0 right-0 h-4 w-4 bg-destructive text-destructive-foreground text-xs flex items-center justify-center rounded-full">
                   {notificationCount}
                 </span>
               )}
@@ -123,8 +113,8 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span>{user?.name}</span>
-                <span className="text-xs font-normal text-muted-foreground">{user?.email}</span>
+                <span>{user?.name || 'Admin'}</span>
+                <span className="text-xs font-normal text-muted-foreground">admin@branchsync.com</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

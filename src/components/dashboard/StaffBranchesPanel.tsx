@@ -1,4 +1,3 @@
-
 import { 
   Card, 
   CardContent, 
@@ -19,18 +18,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Building } from "lucide-react";
 
-// Mock staff data
+// Mock staff data with updated branch names
 const staffData = [
-  { id: 1, name: "John Smith", role: "Manager", branch: "Main Store", lastActive: "Today, 2:30 PM", status: "Active" },
-  { id: 2, name: "Maria Johnson", role: "Manager", branch: "Downtown", lastActive: "Today, 1:15 PM", status: "Active" },
+  { id: 1, name: "John Smith", role: "Manager", branch: "Branch 1", lastActive: "Today, 2:30 PM", status: "Active" },
+  { id: 2, name: "Maria Johnson", role: "Manager", branch: "Branch 2", lastActive: "Today, 1:15 PM", status: "Active" },
   { id: 3, name: "Robert Wilson", role: "Admin", branch: "All Branches", lastActive: "Today, 3:45 PM", status: "Active" },
 ];
 
-// Mock branches data
+// Mock branches data with updated names
 const branchesData = [
-  { id: 1, name: "Main Store", address: "123 Main St, New York, NY 10001", manager: "John Smith", salesToday: "$3,456.78", status: "Open" },
-  { id: 2, name: "Downtown", address: "456 Market St, New York, NY 10002", manager: "Maria Johnson", salesToday: "$2,198.50", status: "Open" },
-  { id: 3, name: "Mall Plaza", address: "789 Plaza Ave, New York, NY 10003", manager: "Unassigned", salesToday: "$1,765.25", status: "Closed" },
+  { id: 1, name: "Branch 1", address: "123 Main St, New York, NY 10001", manager: "John Smith", salesToday: "$3,456.78", status: "Open" },
+  { id: 2, name: "Branch 2", address: "456 Market St, New York, NY 10002", manager: "Maria Johnson", salesToday: "$2,198.50", status: "Open" },
 ];
 
 const StaffBranchesPanel = () => {
