@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,94 +6,66 @@
 @layer base {
   :root {
     /* Base colors */
-    --background: 0 0% 98%; /* Cloud White */
-    --foreground: 0 0% 13%; /* Charcoal Grey */
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 222 47% 11%;
 
-    /* BranchSync Brand Colors - Light Mode */
-    --primary: 242 76% 30%; /* Deep Indigo / Navy Blue */
+    /* Enhanced Brand Colors */
+    --primary: 242 76% 30%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 187 100% 38%; /* Teal / Soft Cyan */
+    --secondary: 187 100% 38%;
     --secondary-foreground: 0 0% 100%;
 
-    --accent: 14 100% 63%; /* Vibrant Orange */
+    --accent: 14 100% 63%;
     --accent-foreground: 0 0% 100%;
 
-    /* Status Colors */
-    --success: 122 42% 45%; /* Emerald Green */
-    --warning: 36 100% 57%; /* Golden Amber */
-    --destructive: 4 80% 56%; /* Deep Red */
+    /* Refined Status Colors */
+    --success: 142 72% 29%;
+    --warning: 45 93% 47%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 46%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 242 76% 30%;
 
-    --radius: 0.5rem;
-
-    /* Sidebar */
-    --sidebar-background: 242 76% 30%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 242 76% 40%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 187 100% 38%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 242 76% 25%;
-    --sidebar-ring: 187 100% 38%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    /* Base colors - Dark Mode */
     --background: 222 47% 11%;
-    --foreground: 0 0% 98%;
+    --foreground: 210 40% 98%;
 
     --card: 222 47% 14%;
-    --card-foreground: 0 0% 98%;
+    --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 11%;
-    --popover-foreground: 0 0% 98%;
+    --popover-foreground: 210 40% 98%;
 
-    /* BranchSync Brand Colors - Dark Mode */
     --primary: 242 76% 40%;
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 187 100% 42%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 210 40% 98%;
 
     --accent: 14 100% 67%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 210 40% 98%;
 
-    /* Status Colors - Dark Mode */
-    --success: 122 42% 50%;
-    --warning: 36 100% 62%;
-    --destructive: 4 80% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --muted: 223 47% 20%;
-    --muted-foreground: 0 0% 80%;
-
-    --border: 223 47% 20%;
-    --input: 223 47% 20%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
     --ring: 242 76% 60%;
-
-    /* Sidebar - Dark Mode */
-    --sidebar-background: 222 47% 10%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 242 76% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 187 100% 42%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 47% 8%;
-    --sidebar-ring: 187 100% 42%;
   }
 }
 
@@ -100,8 +73,66 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased transition-colors duration-300;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Enhanced Card Styles */
+  .card {
+    @apply backdrop-blur-[2px] transition-all duration-300 hover:shadow-lg;
+  }
+
+  /* Improved Button States */
+  button, [type='button'], [type='reset'], [type='submit'] {
+    @apply transition-all duration-200;
+  }
+
+  /* Better Form Controls */
+  input, select, textarea {
+    @apply transition-all duration-200;
+  }
+
+  /* Smooth Transitions */
+  .transition-element {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+
+/* Enhanced Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Glass Effect */
+.glass {
+  @apply bg-background/80 backdrop-blur-md border border-border/50;
+}
+
+/* Gradient Backgrounds */
+.gradient-primary {
+  @apply bg-gradient-to-br from-primary via-primary/90 to-primary/80;
+}
+
+.gradient-secondary {
+  @apply bg-gradient-to-br from-secondary via-secondary/90 to-secondary/80;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
 }
