@@ -31,7 +31,7 @@ const mockUsers: User[] = [
   },
   {
     id: "2",
-    name: "Branch Manager",
+    name: "Branch Admin",
     email: "manager@branchsync.com",
     role: "branch-manager",
     branchId: "branch-1",

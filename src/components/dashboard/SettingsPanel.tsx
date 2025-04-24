@@ -1,4 +1,3 @@
-
 import { 
   Card, 
   CardContent, 
@@ -14,8 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Settings, Clock, Building, Database, CreditCard } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 const SettingsPanel = () => {
+  const { theme, setTheme } = useTheme();
+  
   return (
     <Card>
       <CardHeader>
@@ -60,6 +62,22 @@ const SettingsPanel = () => {
               </div>
               
               <Separator className="my-4" />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium">Theme</h4>
+                  <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
+                </div>
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value as "light" | "dark" | "system")}
+                  className="px-3 py-2 rounded-md bg-background border border-input"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
               
               <div className="flex items-center justify-between">
                 <div>
