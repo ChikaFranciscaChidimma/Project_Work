@@ -23,12 +23,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Mock inventory data
 const mockInventory = [
-  { id: 1, name: "Laptop Dell XPS 13", stock: 24, branch: "Main Store", price: "$1299.99", status: "In Stock" },
-  { id: 2, name: "Wireless Mouse", stock: 45, branch: "Main Store", price: "$24.99", status: "In Stock" },
-  { id: 3, name: "USB-C Cable", stock: 8, branch: "Downtown", price: "$12.99", status: "Low Stock" },
-  { id: 4, name: "Mechanical Keyboard", stock: 3, branch: "Mall Plaza", price: "$89.99", status: "Low Stock" },
-  { id: 5, name: "Headphones", stock: 0, branch: "Downtown", price: "$149.99", status: "Out of Stock" },
-  { id: 6, name: "Monitor 24\"", stock: 12, branch: "Mall Plaza", price: "$199.99", status: "In Stock" },
+  { id: 1, name: "Laptop Dell XPS 13", stock: 24, branch: "Branch 1", price: "$1299.99", status: "In Stock" },
+  { id: 2, name: "Wireless Mouse", stock: 45, branch: "Branch 1", price: "$24.99", status: "In Stock" },
+  { id: 3, name: "USB-C Cable", stock: 8, branch: "Branch 2", price: "$12.99", status: "Low Stock" },
+  { id: 4, name: "Mechanical Keyboard", stock: 3, branch: "Branch 2", price: "$89.99", status: "Low Stock" },
+  { id: 5, name: "Headphones", stock: 0, branch: "Branch 1", price: "$149.99", status: "Out of Stock" },
+  { id: 6, name: "Monitor 24\"", stock: 12, branch: "Branch 2", price: "$199.99", status: "In Stock" },
 ];
 
 interface InventoryPanelProps {

@@ -113,8 +113,8 @@ const Header = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span>{user?.name || 'Admin'}</span>
-                <span className="text-xs font-normal text-muted-foreground">admin@branchsync.com</span>
+                <span>{user?.name || 'Chika'}</span>
+                <span className="text-xs font-normal text-muted-foreground">chikafranciscachidimma@gmail.com</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

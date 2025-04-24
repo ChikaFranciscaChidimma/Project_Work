@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 
 type UserRole = "admin" | "branch-manager" | "cashier";
@@ -26,8 +25,8 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 const mockUsers: User[] = [
   {
     id: "1",
-    name: "Admin User",
-    email: "admin@branchsync.com",
+    name: "Chika",
+    email: "chikafranciscachidimma@gmail.com",
     role: "admin"
   },
   {
@@ -36,7 +35,7 @@ const mockUsers: User[] = [
     email: "manager@branchsync.com",
     role: "branch-manager",
     branchId: "branch-1",
-    branchName: "Main Branch"
+    branchName: "Branch 1"
   },
   {
     id: "3",
@@ -44,7 +43,7 @@ const mockUsers: User[] = [
     email: "cashier@branchsync.com",
     role: "cashier",
     branchId: "branch-1",
-    branchName: "Main Branch"
+    branchName: "Branch 1"
   }
 ];
 

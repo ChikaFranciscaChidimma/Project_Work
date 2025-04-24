@@ -20,15 +20,15 @@ import { Users, Plus, Building } from "lucide-react";
 
 // Mock staff data with updated branch names
 const staffData = [
-  { id: 1, name: "John Smith", role: "Manager", branch: "Branch 1", lastActive: "Today, 2:30 PM", status: "Active" },
-  { id: 2, name: "Maria Johnson", role: "Manager", branch: "Branch 2", lastActive: "Today, 1:15 PM", status: "Active" },
-  { id: 3, name: "Robert Wilson", role: "Admin", branch: "All Branches", lastActive: "Today, 3:45 PM", status: "Active" },
+  { id: 1, name: "Chika", role: "Admin", branch: "All Branches", lastActive: "Today, 2:30 PM", status: "Active" },
+  { id: 2, name: "Maria Johnson", role: "Manager", branch: "Branch 1", lastActive: "Today, 1:15 PM", status: "Active" },
+  { id: 3, name: "Robert Wilson", role: "Manager", branch: "Branch 2", lastActive: "Today, 3:45 PM", status: "Active" },
 ];
 
 // Mock branches data with updated names
 const branchesData = [
-  { id: 1, name: "Branch 1", address: "123 Main St, New York, NY 10001", manager: "John Smith", salesToday: "$3,456.78", status: "Open" },
-  { id: 2, name: "Branch 2", address: "456 Market St, New York, NY 10002", manager: "Maria Johnson", salesToday: "$2,198.50", status: "Open" },
+  { id: 1, name: "Branch 1", address: "123 Main St, New York, NY 10001", manager: "Maria Johnson", salesToday: "$3,456.78", status: "Open" },
+  { id: 2, name: "Branch 2", address: "456 Market St, New York, NY 10002", manager: "Robert Wilson", salesToday: "$2,198.50", status: "Open" },
 ];
 
 const StaffBranchesPanel = () => {
