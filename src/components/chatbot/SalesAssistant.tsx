@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { MessageSquare, Send, Maximize2, Minimize2 } from 'lucide-react';
+import { MessageSquare, Send } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 const SalesAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [isWide, setIsWide] = useState(false);
   const [chat, setChat] = useState<{type: 'user' | 'assistant'; message: string}[]>([
     {type: 'assistant', message: "Hello! I'm your BranchSync sales assistant. How can I help you today?"}
   ]);
@@ -28,18 +27,13 @@ const SalesAssistant = () => {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {isOpen ? (
-        <Card className={`${isWide ? 'w-[600px]' : 'w-[300px] md:w-[400px]'} h-[500px] flex flex-col transition-all duration-300`}>
+        <Card className="w-[300px] md:w-[400px] h-[500px] flex flex-col">
           <div className="p-4 border-b bg-primary text-primary-foreground flex justify-between items-center">
             <h3 className="font-semibold">Sales Assistant</h3>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setIsWide(!isWide)}>
-                {isWide ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                <span className="sr-only">Close chat</span>
-                ✕
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+              <span className="sr-only">Close chat</span>
+              ✕
+            </Button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {chat.map((msg, i) => (
