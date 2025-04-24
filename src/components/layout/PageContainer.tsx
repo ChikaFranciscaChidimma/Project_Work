@@ -12,7 +12,7 @@ const PageContainer = ({ children }: PageContainerProps) => {
   const { resolvedTheme } = useTheme();
 
   return (
-    <div className={`min-h-screen bg-background flex flex-col ${resolvedTheme === 'dark' ? 'dark' : 'light'}`}>
+    <div className={`min-h-screen bg-background flex flex-col ${resolvedTheme}`}>
       <Header />
       <main className="flex-1 px-4 py-6 overflow-y-auto">
         <div className="container mx-auto max-w-7xl">

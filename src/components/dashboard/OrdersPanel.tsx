@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Card, 
@@ -30,13 +29,13 @@ import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-// Mock orders data
+// Update mock orders data
 const mockOrders = [
-  { id: "ORD-001", date: "2023-04-20", customer: "John Doe", total: "$156.99", branch: "Main Store", status: "Completed" },
-  { id: "ORD-002", date: "2023-04-21", customer: "Jane Smith", total: "$89.50", branch: "Downtown", status: "Pending" },
-  { id: "ORD-003", date: "2023-04-21", customer: "Bob Johnson", total: "$234.75", branch: "Mall Plaza", status: "Completed" },
-  { id: "ORD-004", date: "2023-04-22", customer: "Alice Brown", total: "$45.25", branch: "Main Store", status: "Cancelled" },
-  { id: "ORD-005", date: "2023-04-23", customer: "Mike Williams", total: "$124.00", branch: "Downtown", status: "Pending" },
+  { id: "ORD-001", date: "2023-04-20", customer: "John Doe", total: "$156.99", branch: "Branch 1", status: "Completed" },
+  { id: "ORD-002", date: "2023-04-21", customer: "Jane Smith", total: "$89.50", branch: "Branch 2", status: "Pending" },
+  { id: "ORD-003", date: "2023-04-21", customer: "Bob Johnson", total: "$234.75", branch: "Branch 1", status: "Completed" },
+  { id: "ORD-004", date: "2023-04-22", customer: "Alice Brown", total: "$45.25", branch: "Branch 2", status: "Cancelled" },
+  { id: "ORD-005", date: "2023-04-23", customer: "Mike Williams", total: "$124.00", branch: "Branch 1", status: "Pending" },
 ];
 
 interface OrdersPanelProps {
@@ -112,9 +111,8 @@ const OrdersPanel = ({ compact = false }: OrdersPanelProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Branches</SelectItem>
-                  <SelectItem value="Main Store">Main Store</SelectItem>
-                  <SelectItem value="Downtown">Downtown</SelectItem>
-                  <SelectItem value="Mall Plaza">Mall Plaza</SelectItem>
+                  <SelectItem value="Branch 1">Branch 1</SelectItem>
+                  <SelectItem value="Branch 2">Branch 2</SelectItem>
                 </SelectContent>
               </Select>
             </div>

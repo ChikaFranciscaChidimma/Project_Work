@@ -21,33 +21,28 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   
   const [resolvedTheme, setResolvedTheme] = useState<"dark" | "light">("light");
 
-  // Function to apply the theme to the document
-  const applyTheme = (newTheme: "dark" | "light") => {
-    const root = window.document.documentElement;
-    const isDark = newTheme === "dark";
-    
-    root.classList.remove(isDark ? "light" : "dark");
-    root.classList.add(newTheme);
-    setResolvedTheme(newTheme);
-  };
-
-  // Apply theme when the component mounts or theme changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const root = window.document.documentElement;
     
-    const updateTheme = () => {
-      const systemTheme = mediaQuery.matches ? "dark" : "light";
-      const finalTheme = theme === "system" ? systemTheme : theme;
-      applyTheme(finalTheme);
+    const updateTheme = (newTheme: "dark" | "light") => {
+      root.classList.remove("light", "dark");
+      root.classList.add(newTheme);
+      setResolvedTheme(newTheme);
     };
 
-    updateTheme();
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    const handleThemeChange = () => {
+      const systemTheme = mediaQuery.matches ? "dark" : "light";
+      const finalTheme = theme === "system" ? systemTheme : theme;
+      updateTheme(finalTheme);
+    };
+
+    handleThemeChange();
     localStorage.setItem("theme", theme);
 
-    if (theme === "system") {
-      mediaQuery.addEventListener("change", updateTheme);
-      return () => mediaQuery.removeEventListener("change", updateTheme);
-    }
+    mediaQuery.addEventListener("change", handleThemeChange);
+    return () => mediaQuery.removeEventListener("change", handleThemeChange);
   }, [theme]);
 
   return (
