@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/hooks/useTheme";
 import Header from "./Header";
 import SalesAssistant from "../chatbot/SalesAssistant";
 
