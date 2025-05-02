@@ -1,8 +1,20 @@
 
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="absolute top-4 right-4">

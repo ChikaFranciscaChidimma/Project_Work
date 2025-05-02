@@ -1,14 +1,17 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
+import { toast } from "@/hooks/use-toast";
 
 const LoginForm = () => {
   const { login, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +28,13 @@ const LoginForm = () => {
 
     const success = await login(email, password);
     
-    if (!success) {
+    if (success) {
+      toast({
+        title: "Login Successful",
+        description: "Welcome to BranchSync!",
+      });
+      navigate("/dashboard");
+    } else {
       setError("Invalid email or password");
     }
   };
@@ -115,7 +124,7 @@ const LoginForm = () => {
             Default credentials for test purposes:
           </p>
           <div className="text-xs mt-2 text-muted-foreground">
-            <div>Admin: admin@branchsync.com</div>
+            <div>Admin: chikafranciscachidimma@gmail.com</div>
             <div>Branch Manager: manager@branchsync.com</div>
             <div>Cashier: cashier@branchsync.com</div>
             <div className="mt-1">Password: "password" for all users</div>
