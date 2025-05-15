@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ClockIn, ClockOut, MapPin, Laptop } from "lucide-react";
+import { Clock, LogIn, LogOut, MapPin, Laptop } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -105,12 +105,12 @@ const ShiftAttendanceCard = () => {
           <div className="grid grid-cols-1 gap-4">
             {clockedIn ? (
               <Button onClick={handleClockOut} variant="destructive" className="w-full">
-                <ClockOut className="mr-2 h-4 w-4" />
+                <LogOut className="mr-2 h-4 w-4" />
                 Clock Out
               </Button>
             ) : (
               <Button onClick={handleClockIn} className="w-full">
-                <ClockIn className="mr-2 h-4 w-4" />
+                <LogIn className="mr-2 h-4 w-4" />
                 Clock In
               </Button>
             )}
