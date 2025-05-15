@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import PageContainer from "@/components/layout/PageContainer";
 import {
@@ -12,10 +12,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import OrdersPanel from "@/components/dashboard/OrdersPanel";
 import InventoryPanel from "@/components/dashboard/InventoryPanel";
 import StaffAttendancePanel from "@/components/manager/StaffAttendancePanel";
+import ShiftAttendanceCard from "@/components/manager/ShiftAttendanceCard";
+import SalesRecordCard from "@/components/manager/SalesRecordCard";
 import { 
   ShoppingCart, 
   Box,
   Users,
+  Clock,
+  Package
 } from "lucide-react";
 
 const ManagerDashboard = () => {
@@ -40,6 +44,8 @@ const ManagerDashboard = () => {
     { id: "overview", label: "Overview", icon: <ShoppingCart className="h-4 w-4 mr-2" /> },
     { id: "inventory", label: "Inventory", icon: <Box className="h-4 w-4 mr-2" /> },
     { id: "staff", label: "Staff Attendance", icon: <Users className="h-4 w-4 mr-2" /> },
+    { id: "record", label: "Record Sales", icon: <Package className="h-4 w-4 mr-2" /> },
+    { id: "attendance", label: "My Shift", icon: <Clock className="h-4 w-4 mr-2" /> }
   ];
 
   return (
@@ -67,7 +73,10 @@ const ManagerDashboard = () => {
             <OrdersPanel compact branchFilter={user.branchName} />
             <InventoryPanel compact branchFilter={user.branchName} />
           </div>
-          <StaffAttendancePanel compact branchFilter={user.branchName} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <StaffAttendancePanel compact branchFilter={user.branchName} />
+            <ShiftAttendanceCard />
+          </div>
         </TabsContent>
         
         <TabsContent value="inventory">
@@ -76,6 +85,18 @@ const ManagerDashboard = () => {
         
         <TabsContent value="staff">
           <StaffAttendancePanel branchFilter={user.branchName} />
+        </TabsContent>
+
+        <TabsContent value="record">
+          <div className="max-w-xl mx-auto">
+            <SalesRecordCard />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="attendance">
+          <div className="max-w-xl mx-auto">
+            <ShiftAttendanceCard />
+          </div>
         </TabsContent>
       </Tabs>
     </PageContainer>
