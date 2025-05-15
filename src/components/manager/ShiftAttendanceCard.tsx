@@ -6,6 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, LogIn, LogOut, MapPin, Laptop } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface ShiftRecord {
+  userId: string;
+  userName: string;
+  branchId: string;
+  branchName: string;
+  startTime: string;
+  endTime: string | null;
+  duration: string;
+  deviceInfo: string;
+  locationInfo: string;
+  date: string;
+}
 
 const ShiftAttendanceCard = () => {
   const [clockedIn, setClockedIn] = useState(false);
@@ -14,6 +28,19 @@ const ShiftAttendanceCard = () => {
   const [duration, setDuration] = useState<string>("");
   const [currentTime, setCurrentTime] = useState(new Date());
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Check if already clocked in on page load
+  useEffect(() => {
+    const todayShifts = getShiftsForToday();
+    const ongoingShift = todayShifts.find(shift => shift.endTime === null);
+    
+    if (ongoingShift) {
+      setClockedIn(true);
+      setStartTime(new Date(ongoingShift.startTime));
+      setDuration(ongoingShift.duration);
+    }
+  }, []);
 
   // Update time every minute
   useEffect(() => {
@@ -32,11 +59,64 @@ const ShiftAttendanceCard = () => {
     return () => clearInterval(timer);
   }, [clockedIn, startTime, endTime]);
 
+  const getShiftsForToday = (): ShiftRecord[] => {
+    if (!user) return [];
+    
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const allShifts = JSON.parse(localStorage.getItem('shift-records') || '[]');
+    
+    return allShifts.filter((shift: ShiftRecord) => 
+      shift.userId === user.id && shift.date === today
+    );
+  };
+
+  const saveShiftRecord = (record: ShiftRecord) => {
+    const allShifts = JSON.parse(localStorage.getItem('shift-records') || '[]');
+    allShifts.push(record);
+    localStorage.setItem('shift-records', JSON.stringify(allShifts));
+  };
+
+  const updateShiftRecord = (startTimeStr: string) => {
+    if (!user) return;
+    
+    const allShifts = JSON.parse(localStorage.getItem('shift-records') || '[]');
+    const updatedShifts = allShifts.map((shift: ShiftRecord) => {
+      if (shift.userId === user.id && shift.startTime === startTimeStr && shift.endTime === null) {
+        return {
+          ...shift,
+          endTime: new Date().toISOString(),
+          duration: duration
+        };
+      }
+      return shift;
+    });
+    
+    localStorage.setItem('shift-records', JSON.stringify(updatedShifts));
+  };
+
   const handleClockIn = () => {
+    if (!user) return;
+    
     const now = new Date();
     setStartTime(now);
     setClockedIn(true);
     setDuration("0h 0m");
+    
+    const newShift: ShiftRecord = {
+      userId: user.id,
+      userName: user.name,
+      branchId: user.branchId || "",
+      branchName: user.branchName || "",
+      startTime: now.toISOString(),
+      endTime: null,
+      duration: "0h 0m",
+      deviceInfo,
+      locationInfo,
+      date: format(now, 'yyyy-MM-dd')
+    };
+    
+    saveShiftRecord(newShift);
+    
     toast({
       title: "Clocked In",
       description: `You clocked in at ${format(now, "h:mm a")}`,
@@ -44,6 +124,8 @@ const ShiftAttendanceCard = () => {
   };
 
   const handleClockOut = () => {
+    if (!user || !startTime) return;
+    
     const now = new Date();
     setEndTime(now);
     setClockedIn(false);
@@ -52,7 +134,11 @@ const ShiftAttendanceCard = () => {
       const durationMs = now.getTime() - startTime.getTime();
       const hours = Math.floor(durationMs / (1000 * 60 * 60));
       const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-      setDuration(`${hours}h ${minutes}m`);
+      const finalDuration = `${hours}h ${minutes}m`;
+      setDuration(finalDuration);
+      
+      // Update the ongoing shift record
+      updateShiftRecord(startTime.toISOString());
     }
     
     toast({

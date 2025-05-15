@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingCart } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Mock products data
 const products = [
@@ -49,10 +50,30 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface CompletedOrder {
+  id: string;
+  orderId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  discount: number;
+  total: number;
+  paymentType: string;
+  paymentTypeName: string;
+  date: string;
+  branchId: string;
+  branchName: string;
+  userId: string;
+  userName: string;
+  status: string;
+}
+
 const SalesRecordCard = () => {
   const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
   const [calculatedTotal, setCalculatedTotal] = useState<number | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -85,20 +106,50 @@ const SalesRecordCard = () => {
     calculateTotal(selectedProduct, values.quantity, values.discount);
   };
 
+  const saveCompletedOrder = (order: CompletedOrder) => {
+    const existingOrders = JSON.parse(localStorage.getItem('completed-orders') || '[]');
+    existingOrders.push(order);
+    localStorage.setItem('completed-orders', JSON.stringify(existingOrders));
+  };
+
   const onSubmit = (data: FormValues) => {
-    // In a real app, this would send data to an API
-    console.log("Sales data submitted:", data);
-    console.log("Calculated total:", calculatedTotal);
+    if (!user || !selectedProduct || calculatedTotal === null) return;
     
-    // Get product name for more user-friendly toast
-    const productName = products.find(p => p.id === data.productId)?.name || "Product";
-    const paymentTypeName = paymentTypes.find(p => p.id === data.paymentType)?.name || "Payment";
+    const product = products.find(p => p.id === data.productId);
+    const paymentTypeDetails = paymentTypes.find(p => p.id === data.paymentType);
     
+    if (!product || !paymentTypeDetails) return;
+    
+    // Create a completed order
+    const newOrder: CompletedOrder = {
+      id: `order-${Date.now()}`,
+      orderId: `ORD-${Math.floor(10000 + Math.random() * 90000)}`,
+      productId: product.id,
+      productName: product.name,
+      quantity: data.quantity,
+      price: product.price,
+      discount: data.discount,
+      total: calculatedTotal,
+      paymentType: data.paymentType,
+      paymentTypeName: paymentTypeDetails.name,
+      date: new Date().toISOString(),
+      branchId: user.branchId || "",
+      branchName: user.branchName || "",
+      userId: user.id,
+      userName: user.name,
+      status: "Completed"
+    };
+    
+    // Save the order
+    saveCompletedOrder(newOrder);
+    
+    // Show success toast
     toast({
       title: "Sale Recorded Successfully",
-      description: `${data.quantity}x ${productName} sold for $${calculatedTotal?.toFixed(2)} via ${paymentTypeName}`,
+      description: `${data.quantity}x ${product.name} sold for $${calculatedTotal.toFixed(2)} via ${paymentTypeDetails.name}`,
     });
     
+    // Reset the form
     form.reset({
       productId: "",
       quantity: 1,
