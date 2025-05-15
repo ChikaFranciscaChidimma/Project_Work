@@ -33,7 +33,7 @@ const LoginForm = () => {
         title: "Login Successful",
         description: "Welcome to BranchSync!",
       });
-      navigate("/dashboard");
+      navigate("/");
     } else {
       setError("Invalid email or password");
     }
@@ -125,7 +125,8 @@ const LoginForm = () => {
           </p>
           <div className="text-xs mt-2 text-muted-foreground">
             <div>Admin: chikafranciscachidimma@gmail.com</div>
-            <div>Branch Manager: manager@branchsync.com</div>
+            <div>Branch 1 Manager: manager@branchsync.com</div>
+            <div>Branch 2 Manager: manager2@branchsync.com</div>
             <div>Cashier: cashier@branchsync.com</div>
             <div className="mt-1">Password: "password" for all users</div>
           </div>

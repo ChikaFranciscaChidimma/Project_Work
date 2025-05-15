@@ -23,11 +23,13 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
   
   const isAdmin = user?.role === "admin";
   const isBranchManager = user?.role === "branch-manager";
+  const isCashier = user?.role === "cashier";
 
+  // Define navigation items with role-based access
   const navigation = [
     {
       name: "Dashboard",
-      href: "/dashboard",
+      href: isAdmin ? "/dashboard" : "/manager-dashboard",
       icon: Home,
       allowedRoles: ["admin", "branch-manager", "cashier"],
     },
@@ -59,7 +61,13 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
       name: "Staff & Branches",
       href: "/management",
       icon: Users,
-      allowedRoles: ["admin", "branch-manager"],
+      allowedRoles: ["admin"],
+    },
+    {
+      name: "Staff Attendance",
+      href: "/attendance",
+      icon: ClipboardList,
+      allowedRoles: ["branch-manager"],
     },
     {
       name: "Settings",
@@ -111,6 +119,9 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               <div>
                 <p className="text-xs font-medium mb-1 opacity-80">Logged in as:</p>
                 <p className="text-sm font-medium capitalize">{user?.role.replace('-', ' ')}</p>
+                {user?.branchName && (
+                  <p className="text-xs text-muted-foreground mt-1">{user.branchName}</p>
+                )}
               </div>
             </div>
           </div>

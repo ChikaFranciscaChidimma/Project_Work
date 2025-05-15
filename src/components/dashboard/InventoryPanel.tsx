@@ -33,26 +33,42 @@ const mockInventory = [
 
 interface InventoryPanelProps {
   compact?: boolean;
+  branchFilter?: string;
 }
 
-const InventoryPanel = ({ compact = false }: InventoryPanelProps) => {
+const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter inventory based on search term
-  const filteredInventory = mockInventory.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.branch.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter inventory based on search term and branch filter
+  const filteredInventory = mockInventory.filter(item => {
+    // Apply branch filter first if provided
+    if (branchFilter && item.branch !== branchFilter) {
+      return false;
+    }
+    
+    // Then apply search filter
+    return (
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.branch.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
-  // Get low stock items
-  const lowStockItems = mockInventory.filter(item => item.status === "Low Stock" || item.status === "Out of Stock");
+  // Get low stock items for the current branch
+  const lowStockItems = filteredInventory.filter(item => 
+    item.status === "Low Stock" || item.status === "Out of Stock"
+  );
 
   return (
     <Card className={compact ? "h-full" : ""}>
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
         <div>
           <CardTitle>Inventory</CardTitle>
-          <CardDescription>Track real-time stock levels across all branches</CardDescription>
+          <CardDescription>
+            {branchFilter 
+              ? `Track real-time stock levels for ${branchFilter}` 
+              : "Track real-time stock levels across all branches"
+            }
+          </CardDescription>
         </div>
         
         {!compact && (
@@ -93,32 +109,40 @@ const InventoryPanel = ({ compact = false }: InventoryPanelProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead>Item</TableHead>
-                <TableHead>Branch</TableHead>
+                {!branchFilter && <TableHead>Branch</TableHead>}
                 <TableHead>Price</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredInventory.slice(0, compact ? 3 : undefined).map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.branch}</TableCell>
-                  <TableCell>{item.price}</TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      item.status === "In Stock" 
-                        ? "default"
-                        : item.status === "Low Stock" 
-                          ? "secondary" 
-                          : "destructive"
-                    }>
-                      {item.status}
-                    </Badge>
+              {filteredInventory.length > 0 ? (
+                filteredInventory.slice(0, compact ? 3 : undefined).map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    {!branchFilter && <TableCell>{item.branch}</TableCell>}
+                    <TableCell>{item.price}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        item.status === "In Stock" 
+                          ? "default"
+                          : item.status === "Low Stock" 
+                            ? "secondary" 
+                            : "destructive"
+                      }>
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{item.stock}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-8">
+                    No inventory items found matching your criteria
                   </TableCell>
-                  <TableCell className="text-right">{item.stock}</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
           {compact && filteredInventory.length > 3 && (

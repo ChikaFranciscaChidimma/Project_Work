@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Card, 
@@ -40,15 +41,22 @@ const mockOrders = [
 
 interface OrdersPanelProps {
   compact?: boolean;
+  branchFilter?: string;
 }
 
-const OrdersPanel = ({ compact = false }: OrdersPanelProps) => {
+const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [branch, setBranch] = useState<string>("all");
+  const [branch, setBranch] = useState<string>(branchFilter || "all");
   const [status, setStatus] = useState<string>("all");
 
-  // Filter orders based on selected filters
+  // Filter orders based on selected filters and branchFilter prop
   const filteredOrders = mockOrders.filter(order => {
+    // Apply branchFilter prop first (if provided)
+    if (branchFilter && order.branch !== branchFilter) {
+      return false;
+    }
+    
+    // Then apply user-selected filters
     let matchesBranch = branch === "all" || order.branch === branch;
     let matchesStatus = status === "all" || order.status === status;
     let matchesDate = !date || order.date === format(date, "yyyy-MM-dd");
@@ -61,7 +69,12 @@ const OrdersPanel = ({ compact = false }: OrdersPanelProps) => {
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
         <div>
           <CardTitle>Orders</CardTitle>
-          <CardDescription>View and manage all sales orders across branches</CardDescription>
+          <CardDescription>
+            {branchFilter 
+              ? `View and manage sales orders for ${branchFilter}` 
+              : "View and manage all sales orders across branches"
+            }
+          </CardDescription>
         </div>
         
         {!compact && (
@@ -79,7 +92,7 @@ const OrdersPanel = ({ compact = false }: OrdersPanelProps) => {
       </CardHeader>
       
       <CardContent>
-        {!compact && (
+        {!compact && !branchFilter && (
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="flex-1">
               <Popover>
@@ -140,32 +153,40 @@ const OrdersPanel = ({ compact = false }: OrdersPanelProps) => {
               <TableRow>
                 <TableHead className="w-[100px]">Order ID</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Branch</TableHead>
+                {!branchFilter && <TableHead>Branch</TableHead>}
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.slice(0, compact ? 3 : undefined).map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell>{order.branch}</TableCell>
-                  <TableCell>
-                    <span 
-                      className={cn(
-                        "px-2 py-1 rounded-full text-xs font-medium",
-                        order.status === "Completed" ? "bg-green-100 text-green-800" : 
-                        order.status === "Pending" ? "bg-yellow-100 text-yellow-800" : 
-                        "bg-red-100 text-red-800"
-                      )}
-                    >
-                      {order.status}
-                    </span>
+              {filteredOrders.length > 0 ? (
+                filteredOrders.slice(0, compact ? 3 : undefined).map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{order.customer}</TableCell>
+                    {!branchFilter && <TableCell>{order.branch}</TableCell>}
+                    <TableCell>
+                      <span 
+                        className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium",
+                          order.status === "Completed" ? "bg-green-100 text-green-800" : 
+                          order.status === "Pending" ? "bg-yellow-100 text-yellow-800" : 
+                          "bg-red-100 text-red-800"
+                        )}
+                      >
+                        {order.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">{order.total}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-8">
+                    No orders found matching your criteria
                   </TableCell>
-                  <TableCell className="text-right">{order.total}</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
           {compact && filteredOrders.length > 3 && (

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from "react";
 
 type UserRole = "admin" | "branch-manager" | "cashier";
@@ -19,7 +20,11 @@ interface AuthContextProps {
   logout: () => void;
 }
 
+// Create the context
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
+
+// Export the context for direct imports if needed
+export { AuthContext };
 
 // Mock users for demonstration
 const mockUsers: User[] = [
@@ -31,7 +36,7 @@ const mockUsers: User[] = [
   },
   {
     id: "2",
-    name: "Branch Admin",
+    name: "Branch 1 Manager",
     email: "manager@branchsync.com",
     role: "branch-manager",
     branchId: "branch-1",
@@ -39,6 +44,14 @@ const mockUsers: User[] = [
   },
   {
     id: "3",
+    name: "Branch 2 Manager",
+    email: "manager2@branchsync.com",
+    role: "branch-manager",
+    branchId: "branch-2",
+    branchName: "Branch 2"
+  },
+  {
+    id: "4",
     name: "Cashier",
     email: "cashier@branchsync.com",
     role: "cashier",
@@ -48,8 +61,8 @@ const mockUsers: User[] = [
 ];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  // Check if user data exists in localStorage
   const [user, setUser] = useState<User | null>(() => {
-    // Check if user data exists in localStorage
     const savedUser = localStorage.getItem("branchsync-user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
