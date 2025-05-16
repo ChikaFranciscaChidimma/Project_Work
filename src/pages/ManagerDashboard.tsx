@@ -14,14 +14,15 @@ import StaffAttendancePanel from "@/components/manager/StaffAttendancePanel";
 import ShiftAttendanceCard from "@/components/manager/ShiftAttendanceCard";
 import SalesRecordCard from "@/components/manager/SalesRecordCard";
 import MyShiftAttendancePanel from "@/components/manager/MyShiftAttendancePanel";
-import CompletedOrdersPanel from "@/components/manager/CompletedOrdersPanel";
+import OrdersPanel from "@/components/dashboard/OrdersPanel";
 import { 
   ShoppingCart, 
   Box,
   Users,
   Clock,
   Package,
-  ListChecks
+  ListChecks,
+  Check
 } from "lucide-react";
 
 const ManagerDashboard = () => {
@@ -46,7 +47,7 @@ const ManagerDashboard = () => {
     { id: "overview", label: "Overview", icon: <ShoppingCart className="h-4 w-4 mr-2" /> },
     { id: "inventory", label: "Inventory", icon: <Box className="h-4 w-4 mr-2" /> },
     { id: "staff", label: "Staff Attendance", icon: <Users className="h-4 w-4 mr-2" /> },
-    { id: "orders", label: "Completed Orders", icon: <ListChecks className="h-4 w-4 mr-2" /> },
+    { id: "orders", label: "Completed Orders", icon: <Check className="h-4 w-4 mr-2" /> },
     { id: "record", label: "Record Sales", icon: <Package className="h-4 w-4 mr-2" /> },
     { id: "attendance", label: "My Shift", icon: <Clock className="h-4 w-4 mr-2" /> }
   ];
@@ -73,7 +74,7 @@ const ManagerDashboard = () => {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <CompletedOrdersPanel compact branchFilter={user.branchName} />
+            <OrdersPanel compact branchFilter={user.branchName} />
             <InventoryPanel compact branchFilter={user.branchName} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -91,7 +92,7 @@ const ManagerDashboard = () => {
         </TabsContent>
 
         <TabsContent value="orders">
-          <CompletedOrdersPanel branchFilter={user.branchName} />
+          <OrdersPanel branchFilter={user.branchName} />
         </TabsContent>
 
         <TabsContent value="record">

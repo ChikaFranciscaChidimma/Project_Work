@@ -24,20 +24,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, ArrowDown, ArrowUp, FileText } from "lucide-react";
+import { Calendar, ArrowDown, ArrowUp, FileText, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
-// Update mock orders data
-const mockOrders = [
-  { id: "ORD-001", date: "2023-04-20", customer: "John Doe", total: "$156.99", branch: "Branch 1", status: "Completed" },
-  { id: "ORD-002", date: "2023-04-21", customer: "Jane Smith", total: "$89.50", branch: "Branch 2", status: "Pending" },
-  { id: "ORD-003", date: "2023-04-21", customer: "Bob Johnson", total: "$234.75", branch: "Branch 1", status: "Completed" },
-  { id: "ORD-004", date: "2023-04-22", customer: "Alice Brown", total: "$45.25", branch: "Branch 2", status: "Cancelled" },
-  { id: "ORD-005", date: "2023-04-23", customer: "Mike Williams", total: "$124.00", branch: "Branch 1", status: "Pending" },
-];
+interface CompletedOrder {
+  id: string;
+  orderId: string;
+  productName: string;
+  customer: string;
+  date: string;
+  total: number;
+  branch: string;
+  status: string;
+}
 
 interface OrdersPanelProps {
   compact?: boolean;
@@ -47,10 +50,46 @@ interface OrdersPanelProps {
 const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [branch, setBranch] = useState<string>(branchFilter || "all");
-  const [status, setStatus] = useState<string>("all");
+  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
+  
+  // Load completed orders from localStorage
+  useEffect(() => {
+    const loadOrders = () => {
+      const savedOrders = localStorage.getItem('completed-orders') || '[]';
+      const parsedOrders = JSON.parse(savedOrders);
+      
+      // Map the saved orders to the format we need
+      const formattedOrders: CompletedOrder[] = parsedOrders.map((order: any) => ({
+        id: order.id,
+        orderId: order.orderId,
+        productName: order.productName,
+        customer: order.userName || 'Customer',
+        date: order.date,
+        total: order.total,
+        branch: order.branchName,
+        status: order.status
+      }));
+      
+      setCompletedOrders(formattedOrders);
+    };
+    
+    loadOrders();
+    
+    // Add event listener for storage changes
+    window.addEventListener('storage', loadOrders);
+    
+    return () => {
+      window.removeEventListener('storage', loadOrders);
+    };
+  }, []);
 
   // Filter orders based on selected filters and branchFilter prop
-  const filteredOrders = mockOrders.filter(order => {
+  const filteredOrders = completedOrders.filter(order => {
+    // Only show completed orders
+    if (order.status !== "Completed") {
+      return false;
+    }
+    
     // Apply branchFilter prop first (if provided)
     if (branchFilter && order.branch !== branchFilter) {
       return false;
@@ -58,21 +97,23 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
     
     // Then apply user-selected filters
     let matchesBranch = branch === "all" || order.branch === branch;
-    let matchesStatus = status === "all" || order.status === status;
-    let matchesDate = !date || order.date === format(date, "yyyy-MM-dd");
+    let matchesDate = !date || format(new Date(order.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
     
-    return matchesBranch && matchesStatus && matchesDate;
+    return matchesBranch && matchesDate;
   });
 
   return (
     <Card className={compact ? "h-full" : ""}>
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
         <div>
-          <CardTitle>Orders</CardTitle>
+          <CardTitle className="flex items-center">
+            <Check className="h-4 w-4 mr-2 text-green-500" />
+            Completed Orders
+          </CardTitle>
           <CardDescription>
             {branchFilter 
-              ? `View and manage sales orders for ${branchFilter}` 
-              : "View and manage all sales orders across branches"
+              ? `View completed sales orders for ${branchFilter}` 
+              : "View completed sales orders across all branches"
             }
           </CardDescription>
         </div>
@@ -129,32 +170,18 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="flex-1">
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         )}
         
         <div className={compact ? "max-h-[200px] overflow-y-auto" : ""}>
           <Table>
-            {!compact && <TableCaption>A list of your recent orders.</TableCaption>}
+            {!compact && <TableCaption>A list of your completed orders.</TableCaption>}
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Order ID</TableHead>
-                <TableHead>Customer</TableHead>
+                <TableHead>Product</TableHead>
                 {!branchFilter && <TableHead>Branch</TableHead>}
-                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -162,28 +189,20 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
               {filteredOrders.length > 0 ? (
                 filteredOrders.slice(0, compact ? 3 : undefined).map((order) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>{order.customer}</TableCell>
+                    <TableCell className="font-medium">{order.orderId}</TableCell>
+                    <TableCell>{order.productName}</TableCell>
                     {!branchFilter && <TableCell>{order.branch}</TableCell>}
-                    <TableCell>
-                      <span 
-                        className={cn(
-                          "px-2 py-1 rounded-full text-xs font-medium",
-                          order.status === "Completed" ? "bg-green-100 text-green-800" : 
-                          order.status === "Pending" ? "bg-yellow-100 text-yellow-800" : 
-                          "bg-red-100 text-red-800"
-                        )}
-                      >
-                        {order.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">{order.total}</TableCell>
+                    <TableCell>{format(new Date(order.date), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-8">
-                    No orders found matching your criteria
+                    <p className="text-muted-foreground">No completed orders found.</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Completed orders from the "Record Sale" action will appear here.
+                    </p>
                   </TableCell>
                 </TableRow>
               )}
