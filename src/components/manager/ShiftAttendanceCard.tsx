@@ -92,6 +92,50 @@ const ShiftAttendanceCard = () => {
     });
     
     localStorage.setItem('shift-records', JSON.stringify(updatedShifts));
+    
+    // After clocking out, also update staff attendance records
+    updateStaffAttendance();
+  };
+  
+  const updateStaffAttendance = () => {
+    if (!user) return;
+    
+    // Get the current shift data
+    const now = new Date();
+    const today = format(now, 'yyyy-MM-dd');
+    const formattedStart = startTime ? format(startTime, "h:mm a") : "-";
+    const formattedEnd = format(now, "h:mm a");
+    
+    // Create or update attendance record
+    const attendanceRecords = JSON.parse(localStorage.getItem('staff-attendance') || '[]');
+    
+    // Check if this staff member already has an attendance record for today
+    const existingRecordIndex = attendanceRecords.findIndex(
+      (record: any) => record.userId === user.id && record.date === today
+    );
+    
+    const attendanceRecord = {
+      id: existingRecordIndex >= 0 ? attendanceRecords[existingRecordIndex].id : `att-${Date.now()}`,
+      userId: user.id,
+      name: user.name,
+      role: user.role,
+      branch: user.branchName,
+      status: "Present",
+      timeIn: formattedStart,
+      timeOut: formattedEnd,
+      date: today,
+      duration: duration
+    };
+    
+    if (existingRecordIndex >= 0) {
+      // Update existing record
+      attendanceRecords[existingRecordIndex] = attendanceRecord;
+    } else {
+      // Add new record
+      attendanceRecords.push(attendanceRecord);
+    }
+    
+    localStorage.setItem('staff-attendance', JSON.stringify(attendanceRecords));
   };
 
   const handleClockIn = () => {

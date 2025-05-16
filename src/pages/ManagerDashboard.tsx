@@ -21,7 +21,6 @@ import {
   Users,
   Clock,
   Package,
-  ListChecks,
   Check
 } from "lucide-react";
 

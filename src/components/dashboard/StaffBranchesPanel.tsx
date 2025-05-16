@@ -1,3 +1,5 @@
+
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -16,22 +18,45 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Building } from "lucide-react";
+import { Users, Building } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
 // Mock staff data with updated branch names
 const staffData = [
-  { id: 1, name: "Chika", role: "Admin", branch: "All Branches", lastActive: "Today, 2:30 PM", status: "Active" },
-  { id: 2, name: "Maria Johnson", role: "BA", branch: "Branch 1", lastActive: "Today, 1:15 PM", status: "Active" },
-  { id: 3, name: "Robert Wilson", role: "BA", branch: "Branch 2", lastActive: "Today, 3:45 PM", status: "Active" },
+  { id: "1", name: "Chika", role: "Admin", branch: "All Branches", lastActive: "Today, 2:30 PM", status: "Active" },
+  { id: "2", name: "Maria Johnson", role: "BA", branch: "Branch 1", lastActive: "Today, 1:15 PM", status: "Active" },
+  { id: "3", name: "Robert Wilson", role: "BA", branch: "Branch 2", lastActive: "Today, 3:45 PM", status: "Active" },
 ];
 
 // Mock branches data with updated names
 const branchesData = [
-  { id: 1, name: "Branch 1", address: "123 Main St, New York, NY 10001", manager: "Maria Johnson (BA)", salesToday: "$3,456.78", status: "Open" },
-  { id: 2, name: "Branch 2", address: "456 Market St, New York, NY 10002", manager: "Robert Wilson (BA)", salesToday: "$2,198.50", status: "Open" },
+  { id: "1", name: "Branch 1", address: "123 Main St, New York, NY 10001", manager: "Maria Johnson (BA)", salesToday: "$3,456.78", status: "Open" },
+  { id: "2", name: "Branch 2", address: "456 Market St, New York, NY 10002", manager: "Robert Wilson (BA)", salesToday: "$2,198.50", status: "Open" },
 ];
 
+interface AttendanceRecord {
+  id: string;
+  userId: string;
+  name: string;
+  role: string;
+  branch: string;
+  status: string;
+  timeIn: string;
+  timeOut: string;
+  date: string;
+  duration: string;
+}
+
 const StaffBranchesPanel = () => {
+  const [activeTab, setActiveTab] = useState("staff");
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  
+  useEffect(() => {
+    // Load attendance records from localStorage (created by Clock In/Out)
+    const records = JSON.parse(localStorage.getItem('staff-attendance') || '[]');
+    setAttendanceRecords(records);
+  }, []);
+  
   return (
     <Card>
       <CardHeader>
@@ -39,11 +64,11 @@ const StaffBranchesPanel = () => {
           <Users className="h-5 w-5 mr-2" />
           Staff & Branches
         </CardTitle>
-        <CardDescription>Manage your staff members and branch locations</CardDescription>
+        <CardDescription>View staff members and branch locations</CardDescription>
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="staff">
+        <Tabs defaultValue="staff" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="staff">
               <Users className="h-4 w-4 mr-2" />
@@ -53,16 +78,13 @@ const StaffBranchesPanel = () => {
               <Building className="h-4 w-4 mr-2" />
               Branch Locations
             </TabsTrigger>
+            <TabsTrigger value="attendance">
+              <Users className="h-4 w-4 mr-2" />
+              Attendance Logs
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="staff">
-            <div className="flex justify-end mb-4">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Staff Member
-              </Button>
-            </div>
-            
             <Table>
               <TableHeader>
                 <TableRow>
@@ -97,14 +119,7 @@ const StaffBranchesPanel = () => {
             </Table>
           </TabsContent>
           
-          <TabsContent value="branches">
-            <div className="flex justify-end mb-4">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Branch
-              </Button>
-            </div>
-            
+          <TabsContent value="branches">            
             <Table>
               <TableHeader>
                 <TableRow>
@@ -135,6 +150,47 @@ const StaffBranchesPanel = () => {
                     </TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </TabsContent>
+          
+          <TabsContent value="attendance">
+            <div className="mb-4">
+              <p className="text-sm text-muted-foreground">
+                Attendance records are automatically generated when staff clock in and out.
+              </p>
+            </div>
+            
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Branch</TableHead>
+                  <TableHead>Time In</TableHead>
+                  <TableHead>Time Out</TableHead>
+                  <TableHead>Duration</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {attendanceRecords.length > 0 ? (
+                  attendanceRecords.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell>{record.date}</TableCell>
+                      <TableCell className="font-medium">{record.name}</TableCell>
+                      <TableCell>{record.branch}</TableCell>
+                      <TableCell>{record.timeIn}</TableCell>
+                      <TableCell>{record.timeOut}</TableCell>
+                      <TableCell>{record.duration || "-"}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4">
+                      No attendance records found. Records are generated when staff clock in and out.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TabsContent>

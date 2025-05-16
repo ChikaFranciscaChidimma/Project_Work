@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -53,7 +52,7 @@ const paymentTypes = [
   { id: "transfer", name: "Bank Transfer" }
 ];
 
-// Define schema for form validation
+// Define schema with updated validation rules
 const formSchema = z.object({
   productId: z.string({
     required_error: "Please select a product",
@@ -103,7 +102,11 @@ const SalesRecordCard = () => {
       quantity: 1,
       discount: 0,
     },
+    mode: "onChange", // Enable validation on change
   });
+
+  // Check if the form is valid
+  const isFormValid = form.formState.isValid && selectedProduct;
 
   const onProductChange = (productId: string) => {
     const product = products.find(p => p.id === productId);
@@ -266,6 +269,7 @@ const SalesRecordCard = () => {
                     <FormControl>
                       <Input 
                         type="number" 
+                        min="1"
                         {...field} 
                         onChange={(e) => {
                           field.onChange(e);
@@ -286,7 +290,9 @@ const SalesRecordCard = () => {
                     <FormLabel>Discount (%)</FormLabel>
                     <FormControl>
                       <Input 
-                        type="number" 
+                        type="number"
+                        min="0"
+                        max="100"
                         {...field}
                         onChange={(e) => {
                           field.onChange(e);
@@ -334,7 +340,7 @@ const SalesRecordCard = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full mt-2">
+            <Button type="submit" className="w-full mt-2" disabled={!isFormValid}>
               Record Sale
             </Button>
           </form>

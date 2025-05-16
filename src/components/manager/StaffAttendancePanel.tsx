@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -19,17 +19,18 @@ import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Mock attendance data
-const mockAttendance = [
-  { id: 1, name: "Jane Smith", role: "Sales Associate", branch: "Branch 1", status: "Present", timeIn: "08:30 AM", timeOut: "05:30 PM" },
-  { id: 2, name: "Michael Johnson", role: "Cashier", branch: "Branch 1", status: "Present", timeIn: "08:45 AM", timeOut: "05:15 PM" },
-  { id: 3, name: "Emily Wilson", role: "Sales Associate", branch: "Branch 1", status: "Late", timeIn: "09:30 AM", timeOut: "05:30 PM" },
-  { id: 4, name: "Robert Brown", role: "Stock Clerk", branch: "Branch 1", status: "Absent", timeIn: "-", timeOut: "-" },
-  { id: 5, name: "David Clark", role: "Cashier", branch: "Branch 2", status: "Present", timeIn: "08:30 AM", timeOut: "05:30 PM" },
-  { id: 6, name: "Sarah Miller", role: "Sales Associate", branch: "Branch 2", status: "Present", timeIn: "08:15 AM", timeOut: "05:00 PM" },
-  { id: 7, name: "James Taylor", role: "Stock Clerk", branch: "Branch 2", status: "Absent", timeIn: "-", timeOut: "-" },
-  { id: 8, name: "Linda Davis", role: "Cashier", branch: "Branch 2", status: "Late", timeIn: "09:15 AM", timeOut: "05:30 PM" },
-];
+interface AttendanceRecord {
+  id: string;
+  userId: string;
+  name: string;
+  role: string;
+  branch: string;
+  status: string;
+  timeIn: string;
+  timeOut: string;
+  date: string;
+  duration: string;
+}
 
 interface StaffAttendancePanelProps {
   compact?: boolean;
@@ -38,16 +39,25 @@ interface StaffAttendancePanelProps {
 
 const StaffAttendancePanel = ({ compact = false, branchFilter }: StaffAttendancePanelProps) => {
   const [date] = useState<Date>(new Date());
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   
-  // Filter attendance by branch if branchFilter is provided
-  const filteredAttendance = branchFilter
-    ? mockAttendance.filter(staff => staff.branch === branchFilter)
-    : mockAttendance;
+  useEffect(() => {
+    // Load attendance records from localStorage
+    const loadedRecords = JSON.parse(localStorage.getItem('staff-attendance') || '[]');
+    
+    // Filter by branch if needed
+    const filteredRecords = branchFilter
+      ? loadedRecords.filter((record: AttendanceRecord) => record.branch === branchFilter)
+      : loadedRecords;
+    
+    setAttendanceRecords(filteredRecords);
+  }, [branchFilter]);
   
-  const totalStaff = filteredAttendance.length;
-  const presentStaff = filteredAttendance.filter(staff => staff.status === "Present").length;
-  const lateStaff = filteredAttendance.filter(staff => staff.status === "Late").length;
-  const absentStaff = filteredAttendance.filter(staff => staff.status === "Absent").length;
+  // Summary statistics
+  const totalStaff = attendanceRecords.length;
+  const presentStaff = attendanceRecords.filter(staff => staff.status === "Present").length;
+  const lateStaff = attendanceRecords.filter(staff => staff.status === "Late").length;
+  const absentStaff = attendanceRecords.filter(staff => staff.status === "Absent").length;
   
   return (
     <Card className={compact ? "h-full" : ""}>
@@ -58,7 +68,7 @@ const StaffAttendancePanel = ({ compact = false, branchFilter }: StaffAttendance
             Staff Attendance
           </CardTitle>
           <CardDescription>
-            Manage attendance for {branchFilter || "all branches"}
+            Attendance for {branchFilter || "all branches"} - Generated from Clock In/Out
           </CardDescription>
         </div>
         
@@ -105,31 +115,41 @@ const StaffAttendancePanel = ({ compact = false, branchFilter }: StaffAttendance
                 <TableHead>Status</TableHead>
                 <TableHead>Time In</TableHead>
                 <TableHead>Time Out</TableHead>
+                <TableHead>Duration</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAttendance.slice(0, compact ? 3 : undefined).map((staff) => (
-                <TableRow key={staff.id}>
-                  <TableCell className="font-medium">{staff.name}</TableCell>
-                  <TableCell>{staff.role}</TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      staff.status === "Present" 
-                        ? "default"
-                        : staff.status === "Late" 
-                          ? "secondary" 
-                          : "destructive"
-                    }>
-                      {staff.status}
-                    </Badge>
+              {attendanceRecords.length > 0 ? (
+                attendanceRecords.slice(0, compact ? 3 : undefined).map((staff) => (
+                  <TableRow key={staff.id}>
+                    <TableCell className="font-medium">{staff.name}</TableCell>
+                    <TableCell>{staff.role}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        staff.status === "Present" 
+                          ? "default"
+                          : staff.status === "Late" 
+                            ? "secondary" 
+                            : "destructive"
+                      }>
+                        {staff.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{staff.timeIn}</TableCell>
+                    <TableCell>{staff.timeOut}</TableCell>
+                    <TableCell>{staff.duration || "-"}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-4">
+                    No attendance records found. Records are generated when staff clock in and out.
                   </TableCell>
-                  <TableCell>{staff.timeIn}</TableCell>
-                  <TableCell>{staff.timeOut}</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
-          {compact && filteredAttendance.length > 3 && (
+          {compact && attendanceRecords.length > 3 && (
             <div className="mt-2 text-center">
               <Button variant="link" size="sm">View all staff</Button>
             </div>
