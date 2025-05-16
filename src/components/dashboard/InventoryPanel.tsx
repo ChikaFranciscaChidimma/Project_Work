@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Box, Plus, Search, Bell, FileUp, Info } from "lucide-react";
+import { Box, Plus, Search, Bell, FileUp, Info, Upload } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -29,6 +29,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -45,6 +46,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -80,6 +87,7 @@ interface InventoryPanelProps {
 const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState("manual");
   const [showFileUploadInfo, setShowFileUploadInfo] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>(() => {
     // Load inventory from localStorage or use empty array
@@ -188,6 +196,7 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
               title: "Import successful",
               description: `Added ${newItems.length} items to inventory`,
             });
+            setShowAddDialog(false);
           } else {
             toast({
               title: "No items imported",
@@ -354,151 +363,173 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
                 📦 Inventory will be stored in a connected database. Please define your API or database integration endpoint.
               </AlertDescription>
             </Alert>
-            
-            <div className="flex flex-col sm:flex-row w-full sm:items-center gap-2 sm:gap-4">
-              <p className="text-sm font-medium">Bulk Import:</p>
-              <div className="flex items-center gap-2 flex-1">
-                <Button variant="outline" asChild className="relative">
-                  <>
-                    <FileUp className="h-4 w-4 mr-2" />
-                    Import CSV
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={handleFileUpload}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                  </>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => setShowFileUploadInfo(!showFileUploadInfo)}
-                >
-                  <Info className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            {showFileUploadInfo && (
-              <Alert className="w-full">
-                <AlertTitle>CSV Format Guidelines</AlertTitle>
-                <AlertDescription>
-                  <p>Your CSV file should include these headers:</p>
-                  <ul className="list-disc pl-5 mt-2 text-sm space-y-1">
-                    <li>Product - Product name</li>
-                    <li>Branch - Branch name (Branch 1, Branch 2)</li>
-                    <li>Price - Product price (numbers only)</li>
-                    <li>Quantity - Available stock (integer)</li>
-                    <li>Minimum - Minimum stock level (integer)</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
           </CardFooter>
         )}
       </CardContent>
       
-      {/* Add Inventory Dialog */}
+      {/* Add Inventory Dialog with tabs for manual entry and file upload */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Add New Inventory Item</DialogTitle>
             <DialogDescription>
-              Enter the details for the new inventory item.
+              Choose an option below to add inventory items.
             </DialogDescription>
           </DialogHeader>
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter product name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="branch"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Branch</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select branch" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Branch 1">Branch 1</SelectItem>
-                        <SelectItem value="Branch 2">Branch 2</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-2 mb-6">
+              <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+              <TabsTrigger value="upload">Upload Inventory File</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="manual">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter product name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="branch"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Branch</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select branch" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Branch 1">Branch 1</SelectItem>
+                            <SelectItem value="Branch 2">Branch 2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl>
+                            <Input type="number" min="0" placeholder="0" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="minStock"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Minimum Stock Level</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" placeholder="0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Add Item</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </TabsContent>
+            
+            <TabsContent value="upload">
+              <div className="space-y-6">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="h-10 w-10 mb-4 mx-auto text-muted-foreground" />
+                  <h3 className="text-lg font-medium mb-2">Upload Inventory File</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    File must contain these headers: Product, Branch, Price, Quantity, Minimum
+                  </p>
+                  <div className="flex justify-center">
+                    <Button asChild variant="secondary" className="relative">
+                      <>
+                        <FileUp className="h-4 w-4 mr-2" />
+                        Choose CSV File
+                        <input
+                          type="file"
+                          accept=".csv"
+                          onChange={handleFileUpload}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                      </>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setShowFileUploadInfo(!showFileUploadInfo)}
+                      className="ml-2"
+                    >
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
                 
-                <FormField
-                  control={form.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="0" placeholder="0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="minStock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Stock Level</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="0" placeholder="0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {showFileUploadInfo && (
+                  <Alert>
+                    <AlertTitle>CSV Format Guidelines</AlertTitle>
+                    <AlertDescription>
+                      <p>Your CSV file should include these headers:</p>
+                      <ul className="list-disc pl-5 mt-2 text-sm space-y-1">
+                        <li>Product - Product name</li>
+                        <li>Branch - Branch name (Branch 1, Branch 2)</li>
+                        <li>Price - Product price (numbers only)</li>
+                        <li>Quantity - Available stock (integer)</li>
+                        <li>Minimum - Minimum stock level (integer)</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
                 )}
-              />
-              
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Add Item</Button>
-              </DialogFooter>
-            </form>
-          </Form>
+                
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>Close</Button>
+                </DialogFooter>
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </Card>
