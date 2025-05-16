@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -24,23 +24,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, ArrowDown, ArrowUp, FileText, Check } from "lucide-react";
+import { Calendar, FileText, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
-
-interface CompletedOrder {
-  id: string;
-  orderId: string;
-  productName: string;
-  customer: string;
-  date: string;
-  total: number;
-  branch: string;
-  status: string;
-}
+import { useQuery } from "@tanstack/react-query";
+import { fetchOrders } from "@/utils/supabaseApi";
 
 interface OrdersPanelProps {
   compact?: boolean;
@@ -50,56 +40,29 @@ interface OrdersPanelProps {
 const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [branch, setBranch] = useState<string>(branchFilter || "all");
-  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
   
-  // Load completed orders from localStorage
-  useEffect(() => {
-    const loadOrders = () => {
-      const savedOrders = localStorage.getItem('completed-orders') || '[]';
-      const parsedOrders = JSON.parse(savedOrders);
-      
-      // Map the saved orders to the format we need
-      const formattedOrders: CompletedOrder[] = parsedOrders.map((order: any) => ({
-        id: order.id,
-        orderId: order.orderId,
-        productName: order.productName,
-        customer: order.userName || 'Customer',
-        date: order.date,
-        total: order.total,
-        branch: order.branchName,
-        status: order.status
-      }));
-      
-      setCompletedOrders(formattedOrders);
-    };
-    
-    loadOrders();
-    
-    // Add event listener for storage changes
-    window.addEventListener('storage', loadOrders);
-    
-    return () => {
-      window.removeEventListener('storage', loadOrders);
-    };
-  }, []);
+  // Convert branch name to ID for API calls if needed
+  const branchId = branchFilter 
+    ? (branchFilter === "Branch 1" ? 1 : branchFilter === "Branch 2" ? 2 : undefined)
+    : (branch !== "all" ? (branch === "Branch 1" ? 1 : 2) : undefined);
+  
+  // Fetch orders data using React Query
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ['orders', branchId],
+    queryFn: () => fetchOrders(branchId),
+  });
 
-  // Filter orders based on selected filters and branchFilter prop
-  const filteredOrders = completedOrders.filter(order => {
+  // Filter orders based on selected filters
+  const filteredOrders = orders.filter(order => {
     // Only show completed orders
-    if (order.status !== "Completed") {
+    if (order.order_status !== "Completed") {
       return false;
     }
     
-    // Apply branchFilter prop first (if provided)
-    if (branchFilter && order.branch !== branchFilter) {
-      return false;
-    }
+    // Apply date filter if selected
+    let matchesDate = !date || format(new Date(order.created_at || ''), "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
     
-    // Then apply user-selected filters
-    let matchesBranch = branch === "all" || order.branch === branch;
-    let matchesDate = !date || format(new Date(order.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
-    
-    return matchesBranch && matchesDate;
+    return matchesDate;
   });
 
   return (
@@ -186,14 +149,20 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.length > 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-4">
+                    <p className="text-muted-foreground">Loading orders...</p>
+                  </TableCell>
+                </TableRow>
+              ) : filteredOrders.length > 0 ? (
                 filteredOrders.slice(0, compact ? 3 : undefined).map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.orderId}</TableCell>
-                    <TableCell>{order.productName}</TableCell>
-                    {!branchFilter && <TableCell>{order.branch}</TableCell>}
-                    <TableCell>{format(new Date(order.date), "MMM d, yyyy")}</TableCell>
-                    <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
+                  <TableRow key={order.order_id}>
+                    <TableCell className="font-medium">{order.order_number}</TableCell>
+                    <TableCell>Order #{order.order_id}</TableCell>
+                    {!branchFilter && <TableCell>{order.branchName || `Branch ${order.branch_id}`}</TableCell>}
+                    <TableCell>{order.created_at ? format(new Date(order.created_at), "MMM d, yyyy") : 'N/A'}</TableCell>
+                    <TableCell className="text-right">${order.total_amount.toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               ) : (
