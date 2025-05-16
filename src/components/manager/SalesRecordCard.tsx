@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,8 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart } from "lucide-react";
+import { Check, ChevronsUpDown, ShoppingCart } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Mock products data
@@ -21,7 +35,14 @@ const products = [
   { id: "5", name: "Laptop Sleeve 15\"", price: 24.99 },
   { id: "6", name: "Bluetooth Speaker", price: 49.99 },
   { id: "7", name: "Wireless Earbuds", price: 79.99 },
-  { id: "8", name: "Smartphone Stand", price: 15.99 }
+  { id: "8", name: "Smartphone Stand", price: 15.99 },
+  { id: "9", name: "Ergonomic Mouse Pad", price: 19.99 },
+  { id: "10", name: "Webcam Cover", price: 5.99 },
+  { id: "11", name: "USB Hub", price: 34.99 },
+  { id: "12", name: "Desk Cable Organizer", price: 14.99 },
+  { id: "13", name: "Phone Charging Stand", price: 27.99 },
+  { id: "14", name: "Portable SSD 500GB", price: 89.99 },
+  { id: "15", name: "Noise Cancelling Headphones", price: 129.99 }
 ];
 
 // Payment types
@@ -72,6 +93,7 @@ interface CompletedOrder {
 const SalesRecordCard = () => {
   const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
   const [calculatedTotal, setCalculatedTotal] = useState<number | null>(null);
+  const [openProductSelector, setOpenProductSelector] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -87,6 +109,7 @@ const SalesRecordCard = () => {
     const product = products.find(p => p.id === productId);
     setSelectedProduct(product || null);
     calculateTotal(product, form.getValues().quantity, form.getValues().discount);
+    form.setValue("productId", productId);
   };
 
   const calculateTotal = (product: typeof products[0] | null, quantity: number, discountPercentage: number) => {
@@ -176,28 +199,58 @@ const SalesRecordCard = () => {
               control={form.control}
               name="productId"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product</FormLabel>
-                  <Select 
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      onProductChange(value);
-                    }}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a product" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {products.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name} - ${product.price.toFixed(2)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Search & Select Product</FormLabel>
+                  <Popover open={openProductSelector} onOpenChange={setOpenProductSelector}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openProductSelector}
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? products.find((product) => product.id === field.value)?.name
+                            : "Search for a product..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search products..." />
+                        <CommandList>
+                          <CommandEmpty>No product found.</CommandEmpty>
+                          <CommandGroup>
+                            {products.map((product) => (
+                              <CommandItem
+                                key={product.id}
+                                value={product.name}
+                                onSelect={() => {
+                                  onProductChange(product.id);
+                                  setOpenProductSelector(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    product.id === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {product.name} - ${product.price.toFixed(2)}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
