@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { useAuth } from '@/contexts/AuthContext';
+import { unsubscribe } from '@/utils/supabaseApi';
 
 export function useRealtimeData<T>(
   initialData: T[],
@@ -78,7 +79,11 @@ export function useRealtimeData<T>(
       if (channel) {
         // Unsubscribe from channel to prevent memory leaks
         try {
-          channel.unsubscribe();
+          if (unsubscribe) {
+            unsubscribe(channel);
+          } else {
+            channel.unsubscribe();
+          }
         } catch (e) {
           console.error("Error unsubscribing from channel:", e);
         }
@@ -139,7 +144,11 @@ export function useLowStockItems(initialData: any[] = []) {
       isMounted = false;
       if (channel) {
         try {
-          channel.unsubscribe();
+          if (unsubscribe) {
+            unsubscribe(channel);
+          } else {
+            channel.unsubscribe();
+          }
         } catch (e) {
           console.error("Error unsubscribing from channel:", e);
         }
