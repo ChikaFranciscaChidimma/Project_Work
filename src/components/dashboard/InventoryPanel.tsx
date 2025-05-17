@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Card, 
@@ -55,7 +56,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { InventoryItem } from "@/utils/supabaseApi";
+import { InventoryItem, Product } from "@/utils/supabaseApi";
 import { useRealtimeData, useLowStockItems } from "@/hooks/useRealtimeData";
 import { fetchInventory, subscribeToInventory } from "@/utils/supabaseApi";
 
@@ -175,19 +176,26 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
 
   // Format inventory item for display
   const formatInventoryItem = (item: InventoryItem) => {
-    const product = item.product || {};
+    // Ensure product is properly typed and has a default fallback
+    const product = item.product || {} as Product;
     const stock = item.quantity;
+    
+    // Safely access properties with default values
+    const minStockLevel = product.min_stock_level || 0;
+    const productName = product.name || "Unknown Product";
+    const sellingPrice = product.selling_price || 0;
+    
     const status = 
       stock === 0 ? "Out of Stock" :
-      stock <= (product.min_stock_level || 10) ? "Low Stock" : "In Stock";
+      stock <= minStockLevel ? "Low Stock" : "In Stock";
     
     return {
       id: item.inventory_id,
-      name: product.name || "Unknown Product",
+      name: productName,
       branch: branchId === 1 ? "Branch 1" : branchId === 2 ? "Branch 2" : "Unknown Branch",
-      price: `$${product.selling_price?.toFixed(2) || '0.00'}`,
+      price: `$${sellingPrice.toFixed(2)}`,
       stock: stock,
-      minStock: product.min_stock_level || 0,
+      minStock: minStockLevel,
       status: status
     };
   };
