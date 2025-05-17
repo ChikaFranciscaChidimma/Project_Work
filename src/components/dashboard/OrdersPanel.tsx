@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -29,8 +29,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { fetchOrders } from "@/utils/supabaseApi";
+import { fetchOrders, subscribeToOrders, Order } from "@/utils/supabaseApi";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 
 interface OrdersPanelProps {
   compact?: boolean;
@@ -46,11 +46,16 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
     ? (branchFilter === "Branch 1" ? 1 : branchFilter === "Branch 2" ? 2 : undefined)
     : (branch !== "all" ? (branch === "Branch 1" ? 1 : 2) : undefined);
   
-  // Fetch orders data using React Query
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['orders', branchId],
-    queryFn: () => fetchOrders(branchId),
-  });
+  // Use real-time data hook for orders
+  const { 
+    data: orders = [], 
+    isLoading 
+  } = useRealtimeData<Order>(
+    [], 
+    () => fetchOrders(branchId),
+    subscribeToOrders,
+    [branchId]
+  );
 
   // Filter orders based on selected filters
   const filteredOrders = orders.filter(order => {
@@ -138,7 +143,7 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
         
         <div className={compact ? "max-h-[200px] overflow-y-auto" : ""}>
           <Table>
-            {!compact && <TableCaption>A list of your completed orders.</TableCaption>}
+            {!compact && <TableCaption>A list of your completed orders with real-time updates.</TableCaption>}
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Order ID</TableHead>
@@ -170,7 +175,7 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
                   <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-8">
                     <p className="text-muted-foreground">No completed orders found.</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Completed orders from the "Record Sale" action will appear here.
+                      Completed orders from the "Record Sale" action will appear here in real-time.
                     </p>
                   </TableCell>
                 </TableRow>

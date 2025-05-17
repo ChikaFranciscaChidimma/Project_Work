@@ -55,8 +55,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { fetchInventory, fetchLowStockItems, Product } from "@/utils/supabaseApi";
-import { useQuery } from "@tanstack/react-query";
+import { InventoryItem } from "@/utils/supabaseApi";
+import { useRealtimeData, useLowStockItems } from "@/hooks/useRealtimeData";
+import { fetchInventory, subscribeToInventory } from "@/utils/supabaseApi";
 
 // Form schema for adding inventory
 const inventoryFormSchema = z.object({
@@ -87,17 +88,24 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
     ? (branchFilter === "Branch 1" ? 1 : branchFilter === "Branch 2" ? 2 : undefined)
     : undefined;
   
-  // Fetch inventory data using React Query
-  const { data: inventoryItems = [], isLoading: isLoadingInventory, error: inventoryError } = useQuery({
-    queryKey: ['inventory', branchId],
-    queryFn: () => fetchInventory(branchId),
-  });
+  // Use real-time data hook for inventory items
+  const { 
+    data: inventoryItems = [], 
+    isLoading: isLoadingInventory, 
+    error: inventoryError 
+  } = useRealtimeData<InventoryItem>(
+    [], 
+    () => fetchInventory(branchId),
+    subscribeToInventory,
+    [branchId]
+  );
   
-  // Fetch low stock items
-  const { data: lowStockItems = [], isLoading: isLoadingLowStock } = useQuery({
-    queryKey: ['lowStockItems', branchId],
-    queryFn: () => fetchLowStockItems(branchId),
-  });
+  // Use specialized hook for low stock items with real-time updates
+  const { 
+    lowStockItems = [], 
+    isLoading: isLoadingLowStock,
+    error: lowStockError
+  } = useLowStockItems();
   
   const form = useForm<z.infer<typeof inventoryFormSchema>>({
     resolver: zodResolver(inventoryFormSchema),
@@ -119,7 +127,15 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
         variant: "destructive"
       });
     }
-  }, [inventoryError, toast]);
+    
+    if (lowStockError) {
+      toast({
+        title: "Error fetching low stock items",
+        description: "Could not load low stock data. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  }, [inventoryError, lowStockError, toast]);
 
   // Filter inventory based on search term
   const filteredInventory = inventoryItems.filter(item => {
@@ -158,7 +174,7 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
   };
 
   // Format inventory item for display
-  const formatInventoryItem = (item: any) => {
+  const formatInventoryItem = (item: InventoryItem) => {
     const product = item.product || {};
     const stock = item.quantity;
     const status = 
@@ -294,7 +310,7 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
             <Alert className="w-full bg-muted/50">
               <Info className="h-4 w-4" />
               <AlertDescription className="flex items-center">
-                📦 Inventory is now connected to Supabase. Data is fetched from your Supabase database.
+                📦 Inventory is now connected to Supabase with real-time updates. Changes will automatically appear across all dashboards.
               </AlertDescription>
             </Alert>
           </CardFooter>
