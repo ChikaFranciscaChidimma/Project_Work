@@ -95,13 +95,21 @@ export const fetchInventory = async (branchId?: number): Promise<InventoryItem[]
 
 // Function to fetch low stock items
 export const fetchLowStockItems = async (branchId?: number): Promise<InventoryItem[]> => {
+  const { data: products } = await supabase
+    .from('products')
+    .select('product_id, min_stock_level');
+  
+  const productsMap = new Map();
+  products?.forEach(product => {
+    productsMap.set(product.product_id, product.min_stock_level);
+  });
+
   let query = supabase
     .from('inventory')
     .select(`
       *,
       product:product_id(*)
-    `)
-    .lt('quantity', supabase.rpc('inventory_min_stock_level'));
+    `);
   
   if (branchId) {
     query = query.eq('branch_id', branchId);
@@ -114,7 +122,13 @@ export const fetchLowStockItems = async (branchId?: number): Promise<InventoryIt
     throw error;
   }
   
-  return data as InventoryItem[];
+  // Filter low stock items in JavaScript
+  const lowStockItems = data?.filter(item => {
+    const minStockLevel = item.product?.min_stock_level || 5;
+    return item.quantity < minStockLevel;
+  }) || [];
+  
+  return lowStockItems as InventoryItem[];
 };
 
 // API functions for Orders

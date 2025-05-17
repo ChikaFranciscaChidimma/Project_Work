@@ -421,7 +421,7 @@ const InventoryPanel = ({ compact = false, branchFilter }: InventoryPanelProps) 
                   <div className="flex justify-center">
                     <Button asChild variant="secondary" className="relative">
                       <>
-                        <FileUp className="h-4 w-4 mr-2" />
+                        <Upload className="h-4 w-4 mr-2" />
                         Choose CSV File
                         <input
                           type="file"

@@ -24,7 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="system" storageKey="theme">
+        <ThemeProvider>
           <AuthProvider>
             <App />
             <Toaster />
