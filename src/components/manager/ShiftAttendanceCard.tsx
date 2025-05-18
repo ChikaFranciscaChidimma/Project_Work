@@ -7,24 +7,40 @@ import { Clock, LogIn, LogOut, MapPin, Laptop } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { recordClockIn, recordClockOut } from "@/utils/supabaseApi";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface ShiftRecord {
+  userId: string;
+  userName: string;
+  branchId: string;
+  branchName: string;
+  startTime: string;
+  endTime: string | null;
+  duration: string;
+  deviceInfo: string;
+  locationInfo: string;
+  date: string;
+}
 
 const ShiftAttendanceCard = () => {
   const [clockedIn, setClockedIn] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
-  const [currentAttendanceId, setCurrentAttendanceId] = useState<number | null>(null);
   const [duration, setDuration] = useState<string>("");
   const [currentTime, setCurrentTime] = useState(new Date());
-  
   const { toast } = useToast();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  
-  // Convert user to numeric id for API
-  const userId = user?.id ? parseInt(user.id) : 0;
-  const branchId = user?.branchName === "Branch 1" ? 1 : user?.branchName === "Branch 2" ? 2 : 0;
+
+  // Check if already clocked in on page load
+  useEffect(() => {
+    const todayShifts = getShiftsForToday();
+    const ongoingShift = todayShifts.find(shift => shift.endTime === null);
+    
+    if (ongoingShift) {
+      setClockedIn(true);
+      setStartTime(new Date(ongoingShift.startTime));
+      setDuration(ongoingShift.duration);
+    }
+  }, []);
 
   // Update time every minute
   useEffect(() => {
@@ -43,79 +59,116 @@ const ShiftAttendanceCard = () => {
     return () => clearInterval(timer);
   }, [clockedIn, startTime, endTime]);
 
-  // Clock In mutation
-  const clockInMutation = useMutation({
-    mutationFn: recordClockIn,
-    onSuccess: (data) => {
-      setCurrentAttendanceId(data.attendance_id || null);
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      toast({
-        title: "Clocked In",
-        description: `You clocked in at ${format(new Date(), "h:mm a")}`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to clock in. Please try again.",
-        variant: "destructive",
-      });
-      console.error("Clock in error:", error);
-    }
-  });
+  const getShiftsForToday = (): ShiftRecord[] => {
+    if (!user) return [];
+    
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const allShifts = JSON.parse(localStorage.getItem('shift-records') || '[]');
+    
+    return allShifts.filter((shift: ShiftRecord) => 
+      shift.userId === user.id && shift.date === today
+    );
+  };
 
-  // Clock Out mutation
-  const clockOutMutation = useMutation({
-    mutationFn: ({ attendanceId, duration }: { attendanceId: number, duration: string }) => 
-      recordClockOut(attendanceId, duration),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      toast({
-        title: "Clocked Out",
-        description: `You clocked out at ${format(new Date(), "h:mm a")}`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to clock out. Please try again.",
-        variant: "destructive",
-      });
-      console.error("Clock out error:", error);
+  const saveShiftRecord = (record: ShiftRecord) => {
+    const allShifts = JSON.parse(localStorage.getItem('shift-records') || '[]');
+    allShifts.push(record);
+    localStorage.setItem('shift-records', JSON.stringify(allShifts));
+  };
+
+  const updateShiftRecord = (startTimeStr: string) => {
+    if (!user) return;
+    
+    const allShifts = JSON.parse(localStorage.getItem('shift-records') || '[]');
+    const updatedShifts = allShifts.map((shift: ShiftRecord) => {
+      if (shift.userId === user.id && shift.startTime === startTimeStr && shift.endTime === null) {
+        return {
+          ...shift,
+          endTime: new Date().toISOString(),
+          duration: duration
+        };
+      }
+      return shift;
+    });
+    
+    localStorage.setItem('shift-records', JSON.stringify(updatedShifts));
+    
+    // After clocking out, also update staff attendance records
+    updateStaffAttendance();
+  };
+  
+  const updateStaffAttendance = () => {
+    if (!user) return;
+    
+    // Get the current shift data
+    const now = new Date();
+    const today = format(now, 'yyyy-MM-dd');
+    const formattedStart = startTime ? format(startTime, "h:mm a") : "-";
+    const formattedEnd = format(now, "h:mm a");
+    
+    // Create or update attendance record
+    const attendanceRecords = JSON.parse(localStorage.getItem('staff-attendance') || '[]');
+    
+    // Check if this staff member already has an attendance record for today
+    const existingRecordIndex = attendanceRecords.findIndex(
+      (record: any) => record.userId === user.id && record.date === today
+    );
+    
+    const attendanceRecord = {
+      id: existingRecordIndex >= 0 ? attendanceRecords[existingRecordIndex].id : `att-${Date.now()}`,
+      userId: user.id,
+      name: user.name,
+      role: user.role,
+      branch: user.branchName,
+      status: "Present",
+      timeIn: formattedStart,
+      timeOut: formattedEnd,
+      date: today,
+      duration: duration
+    };
+    
+    if (existingRecordIndex >= 0) {
+      // Update existing record
+      attendanceRecords[existingRecordIndex] = attendanceRecord;
+    } else {
+      // Add new record
+      attendanceRecords.push(attendanceRecord);
     }
-  });
+    
+    localStorage.setItem('staff-attendance', JSON.stringify(attendanceRecords));
+  };
 
   const handleClockIn = () => {
-    if (!user || !userId || !branchId) {
-      toast({
-        title: "Error",
-        description: "User information is incomplete. Please log in again.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!user) return;
     
     const now = new Date();
     setStartTime(now);
     setClockedIn(true);
     setDuration("0h 0m");
     
-    clockInMutation.mutate({
-      user_id: userId,
-      branch_id: branchId,
+    const newShift: ShiftRecord = {
+      userId: user.id,
+      userName: user.name,
+      branchId: user.branchId || "",
+      branchName: user.branchName || "",
+      startTime: now.toISOString(),
+      endTime: null,
+      duration: "0h 0m",
+      deviceInfo,
+      locationInfo,
       date: format(now, 'yyyy-MM-dd')
+    };
+    
+    saveShiftRecord(newShift);
+    
+    toast({
+      title: "Clocked In",
+      description: `You clocked in at ${format(now, "h:mm a")}`,
     });
   };
 
   const handleClockOut = () => {
-    if (!currentAttendanceId) {
-      toast({
-        title: "Error",
-        description: "No active shift found.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!user || !startTime) return;
     
     const now = new Date();
     setEndTime(now);
@@ -128,14 +181,17 @@ const ShiftAttendanceCard = () => {
       const finalDuration = `${hours}h ${minutes}m`;
       setDuration(finalDuration);
       
-      clockOutMutation.mutate({
-        attendanceId: currentAttendanceId,
-        duration: finalDuration
-      });
+      // Update the ongoing shift record
+      updateShiftRecord(startTime.toISOString());
     }
+    
+    toast({
+      title: "Clocked Out",
+      description: `You clocked out at ${format(now, "h:mm a")}`,
+    });
   };
 
-  // Mock data for device and location (would normally be detected)
+  // Mock data for device and location
   const deviceInfo = "Windows PC / Chrome Browser";
   const locationInfo = "Main Branch Office";
 
@@ -178,23 +234,14 @@ const ShiftAttendanceCard = () => {
 
           <div className="grid grid-cols-1 gap-4">
             {clockedIn ? (
-              <Button 
-                onClick={handleClockOut} 
-                variant="destructive" 
-                className="w-full" 
-                disabled={clockOutMutation.isPending}
-              >
+              <Button onClick={handleClockOut} variant="destructive" className="w-full">
                 <LogOut className="mr-2 h-4 w-4" />
-                {clockOutMutation.isPending ? "Processing..." : "Clock Out"}
+                Clock Out
               </Button>
             ) : (
-              <Button 
-                onClick={handleClockIn} 
-                className="w-full" 
-                disabled={clockInMutation.isPending}
-              >
+              <Button onClick={handleClockIn} className="w-full">
                 <LogIn className="mr-2 h-4 w-4" />
-                {clockInMutation.isPending ? "Processing..." : "Clock In"}
+                Clock In
               </Button>
             )}
           </div>

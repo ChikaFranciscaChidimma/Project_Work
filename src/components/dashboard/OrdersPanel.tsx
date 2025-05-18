@@ -24,13 +24,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, FileText, Check } from "lucide-react";
+import { Calendar, ArrowDown, ArrowUp, FileText, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { fetchOrders, subscribeToOrders, Order } from "@/utils/supabaseApi";
-import { useRealtimeData } from "@/hooks/useRealtimeData";
+import { useEffect } from "react";
+
+interface CompletedOrder {
+  id: string;
+  orderId: string;
+  productName: string;
+  customer: string;
+  date: string;
+  total: number;
+  branch: string;
+  status: string;
+}
 
 interface OrdersPanelProps {
   compact?: boolean;
@@ -40,34 +50,56 @@ interface OrdersPanelProps {
 const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [branch, setBranch] = useState<string>(branchFilter || "all");
+  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
   
-  // Convert branch name to ID for API calls if needed
-  const branchId = branchFilter 
-    ? (branchFilter === "Branch 1" ? 1 : branchFilter === "Branch 2" ? 2 : undefined)
-    : (branch !== "all" ? (branch === "Branch 1" ? 1 : 2) : undefined);
-  
-  // Use real-time data hook for orders
-  const { 
-    data: orders = [], 
-    isLoading 
-  } = useRealtimeData<Order>(
-    [], 
-    () => fetchOrders(branchId),
-    subscribeToOrders,
-    [branchId]
-  );
+  // Load completed orders from localStorage
+  useEffect(() => {
+    const loadOrders = () => {
+      const savedOrders = localStorage.getItem('completed-orders') || '[]';
+      const parsedOrders = JSON.parse(savedOrders);
+      
+      // Map the saved orders to the format we need
+      const formattedOrders: CompletedOrder[] = parsedOrders.map((order: any) => ({
+        id: order.id,
+        orderId: order.orderId,
+        productName: order.productName,
+        customer: order.userName || 'Customer',
+        date: order.date,
+        total: order.total,
+        branch: order.branchName,
+        status: order.status
+      }));
+      
+      setCompletedOrders(formattedOrders);
+    };
+    
+    loadOrders();
+    
+    // Add event listener for storage changes
+    window.addEventListener('storage', loadOrders);
+    
+    return () => {
+      window.removeEventListener('storage', loadOrders);
+    };
+  }, []);
 
-  // Filter orders based on selected filters
-  const filteredOrders = orders.filter(order => {
+  // Filter orders based on selected filters and branchFilter prop
+  const filteredOrders = completedOrders.filter(order => {
     // Only show completed orders
-    if (order.order_status !== "Completed") {
+    if (order.status !== "Completed") {
       return false;
     }
     
-    // Apply date filter if selected
-    let matchesDate = !date || format(new Date(order.created_at || ''), "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
+    // Apply branchFilter prop first (if provided)
+    if (branchFilter && order.branch !== branchFilter) {
+      return false;
+    }
     
-    return matchesDate;
+    // Then apply user-selected filters
+    let matchesBranch = branch === "all" || order.branch === branch;
+    let matchesDate = !date || format(new Date(order.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
+    
+    return matchesBranch && matchesDate;
   });
 
   return (
@@ -143,7 +175,7 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
         
         <div className={compact ? "max-h-[200px] overflow-y-auto" : ""}>
           <Table>
-            {!compact && <TableCaption>A list of your completed orders with real-time updates.</TableCaption>}
+            {!compact && <TableCaption>A list of your completed orders.</TableCaption>}
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Order ID</TableHead>
@@ -154,20 +186,14 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-4">
-                    <p className="text-muted-foreground">Loading orders...</p>
-                  </TableCell>
-                </TableRow>
-              ) : filteredOrders.length > 0 ? (
+              {filteredOrders.length > 0 ? (
                 filteredOrders.slice(0, compact ? 3 : undefined).map((order) => (
-                  <TableRow key={order.order_id}>
-                    <TableCell className="font-medium">{order.order_number}</TableCell>
-                    <TableCell>Order #{order.order_id}</TableCell>
-                    {!branchFilter && <TableCell>{order.branchName || `Branch ${order.branch_id}`}</TableCell>}
-                    <TableCell>{order.created_at ? format(new Date(order.created_at), "MMM d, yyyy") : 'N/A'}</TableCell>
-                    <TableCell className="text-right">${order.total_amount.toFixed(2)}</TableCell>
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.orderId}</TableCell>
+                    <TableCell>{order.productName}</TableCell>
+                    {!branchFilter && <TableCell>{order.branch}</TableCell>}
+                    <TableCell>{format(new Date(order.date), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               ) : (
@@ -175,7 +201,7 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
                   <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-8">
                     <p className="text-muted-foreground">No completed orders found.</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Completed orders from the "Record Sale" action will appear here in real-time.
+                      Completed orders from the "Record Sale" action will appear here.
                     </p>
                   </TableCell>
                 </TableRow>

@@ -2,8 +2,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -11,6 +13,7 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import POS from "./pages/POS";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "./pages/AccessDenied";
+import { useAuth } from "./contexts/AuthContext";
 
 // Role-based route protection component
 const ProtectedRoute = ({ 
@@ -53,8 +56,11 @@ const RoleBasedRedirect = () => {
   return <Navigate to="/pos" replace />;
 };
 
-const App = () => (
-  <TooltipProvider>
+const queryClient = new QueryClient();
+
+// Wrap the main app with necessary providers
+const AppContent = () => (
+  <BrowserRouter>
     <Routes>
       <Route path="/" element={<RoleBasedRedirect />} />
       <Route path="/login" element={<Login />} />
@@ -84,7 +90,21 @@ const App = () => (
       {/* 404 Handler */}
       <Route path="*" element={<NotFound />} />
     </Routes>
-  </TooltipProvider>
+  </BrowserRouter>
+);
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </TooltipProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
 );
 
 export default App;

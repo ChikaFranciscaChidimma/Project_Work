@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+
+import React, { createContext, useContext, useState } from "react";
 
 type UserRole = "admin" | "branch-manager" | "cashier";
 
@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 // Export the context for direct imports if needed
 export { AuthContext };
 
-// Mock users for demonstration (would be replaced with Supabase authentication)
+// Mock users for demonstration
 const mockUsers: User[] = [
   {
     id: "1",
@@ -39,7 +39,7 @@ const mockUsers: User[] = [
     name: "Branch 1 Manager",
     email: "manager@branchsync.com",
     role: "branch-manager",
-    branchId: "1",
+    branchId: "branch-1",
     branchName: "Branch 1"
   },
   {
@@ -47,7 +47,7 @@ const mockUsers: User[] = [
     name: "Branch 2 Manager",
     email: "manager2@branchsync.com",
     role: "branch-manager",
-    branchId: "2",
+    branchId: "branch-2",
     branchName: "Branch 2"
   },
   {
@@ -55,7 +55,7 @@ const mockUsers: User[] = [
     name: "Cashier",
     email: "cashier@branchsync.com",
     role: "cashier",
-    branchId: "1",
+    branchId: "branch-1",
     branchName: "Branch 1"
   }
 ];
@@ -68,13 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Set up Supabase auth listener (for future implementation)
-  useEffect(() => {
-    // This would be the place to setup Supabase auth listener
-    // For now, we'll keep using the mock implementation
-  }, []);
-
-  // Mock login function - in a real app, this would use Supabase auth
+  // Mock login function - in a real app, this would call an API
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
@@ -88,10 +82,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (foundUser && password === "password") {
         setUser(foundUser);
         localStorage.setItem("branchsync-user", JSON.stringify(foundUser));
-        
-        // Log authentication for debugging
-        console.log("User authenticated:", foundUser);
-        
         return true;
       }
       
@@ -102,7 +92,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
-    // Would use supabase.auth.signOut() in a real implementation
     setUser(null);
     localStorage.removeItem("branchsync-user");
   };
