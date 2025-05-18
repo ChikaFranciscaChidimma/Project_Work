@@ -7,23 +7,31 @@ interface SkeletonTableProps {
   rows?: number;
   columns?: number;
   className?: string;
+  showHeader?: boolean;
 }
 
-export function SkeletonTable({ rows = 5, columns = 4, className }: SkeletonTableProps) {
+export function SkeletonTable({ 
+  rows = 5, 
+  columns = 4, 
+  className, 
+  showHeader = true 
+}: SkeletonTableProps) {
   return (
     <div className={className}>
       <Table>
-        <TableHeader>
-          <TableRow>
-            {Array(columns)
-              .fill(0)
-              .map((_, i) => (
-                <TableHead key={`header-${i}`}>
-                  <Skeleton className="h-4 w-[80%]" />
-                </TableHead>
-              ))}
-          </TableRow>
-        </TableHeader>
+        {showHeader && (
+          <TableHeader>
+            <TableRow>
+              {Array(columns)
+                .fill(0)
+                .map((_, i) => (
+                  <TableHead key={`header-${i}`}>
+                    <Skeleton className="h-4 w-[80%]" />
+                  </TableHead>
+                ))}
+            </TableRow>
+          </TableHeader>
+        )}
         <TableBody>
           {Array(rows)
             .fill(0)

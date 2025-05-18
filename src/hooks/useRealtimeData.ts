@@ -37,9 +37,12 @@ export function useRealtimeData<T extends { [key: string]: any }>(
     setError(null);
     
     try {
+      console.log(`Fetching data for ${subscribeFunction.name || 'unknown function'}`);
       const fetchedData = await fetchFunction();
+      console.log(`Fetched ${fetchedData?.length || 0} items`);
       setData(fetchedData);
     } catch (err) {
+      console.error(`Error in refetch for ${subscribeFunction.name || 'unknown function'}:`, err);
       setError(err instanceof Error ? err : new Error('An error occurred while fetching data'));
     } finally {
       setIsLoading(false);
@@ -101,12 +104,19 @@ export function useRealtimeData<T extends { [key: string]: any }>(
       setError(null);
       
       try {
+        const functionName = subscribeFunction.name || 'unknown';
+        console.log(`Initial data fetch for ${functionName} started`);
+        
         const fetchedData = await fetchFunction();
+        
         if (isMounted) {
+          console.log(`Initial data fetch for ${functionName} completed:`, 
+            fetchedData?.length || 0, 'items');
           setData(fetchedData);
         }
       } catch (err) {
         if (isMounted) {
+          console.error("Error fetching data:", err);
           setError(err instanceof Error ? err : new Error('An error occurred while fetching data'));
         }
       } finally {
@@ -119,29 +129,39 @@ export function useRealtimeData<T extends { [key: string]: any }>(
     fetchData();
 
     // Set up real-time subscription with batched updates
-    channel = subscribeFunction((payload: { new: T; old: T | null; eventType: string }) => {
-      if (!isMounted) return;
-      
-      // Queue updates based on event type
-      switch (payload.eventType) {
-        case 'INSERT':
-          updateQueue.inserts.push(payload.new);
-          break;
-        case 'UPDATE':
-          updateQueue.updates.set(payload.new[idField], payload.new);
-          break;
-        case 'DELETE':
-          if (payload.old) {
-            updateQueue.deletes.add(payload.old[idField]);
-          }
-          break;
+    try {
+      channel = subscribeFunction((payload: { new: T; old: T | null; eventType: string }) => {
+        if (!isMounted) return;
+        
+        console.log(`Realtime ${payload.eventType} event received:`, payload);
+        
+        // Queue updates based on event type
+        switch (payload.eventType) {
+          case 'INSERT':
+            updateQueue.inserts.push(payload.new);
+            break;
+          case 'UPDATE':
+            updateQueue.updates.set(payload.new[idField], payload.new);
+            break;
+          case 'DELETE':
+            if (payload.old) {
+              updateQueue.deletes.add(payload.old[idField]);
+            }
+            break;
+        }
+        
+        // Process updates in batches
+        batchedUpdate();
+      }, branchId);
+    } catch (err) {
+      console.error("Error setting up subscription:", err);
+      if (isMounted) {
+        setError(err instanceof Error ? err : new Error('Error setting up real-time subscription'));
       }
-      
-      // Process updates in batches
-      batchedUpdate();
-    }, branchId);
+    }
 
     return () => {
+      console.log("Cleaning up subscription");
       isMounted = false;
       if (channel) {
         try {
@@ -175,10 +195,12 @@ export function useLowStockItems(initialData: any[] = []) {
       setError(null);
       
       try {
+        console.log("Fetching low stock items");
         const { fetchLowStockItems, subscribeToLowStockItems } = await import('@/utils/supabaseApi');
         const fetchedData = await fetchLowStockItems(branchId);
         
         if (isMounted) {
+          console.log(`Fetched ${fetchedData?.length || 0} low stock items`);
           setLowStockItems(fetchedData);
         }
         
@@ -187,6 +209,7 @@ export function useLowStockItems(initialData: any[] = []) {
           if (!isMounted) return;
           
           try {
+            console.log("Updating low stock items due to inventory changes");
             const newItems = await fetchLowStockItems(branchId);
             setLowStockItems(newItems);
           } catch (err) {
@@ -201,6 +224,7 @@ export function useLowStockItems(initialData: any[] = []) {
         
       } catch (err) {
         if (isMounted) {
+          console.error("Error fetching low stock items:", err);
           setError(err instanceof Error ? err : new Error('An error occurred while fetching low stock items'));
         }
       } finally {
@@ -213,6 +237,7 @@ export function useLowStockItems(initialData: any[] = []) {
     fetchData();
 
     return () => {
+      console.log("Cleaning up low stock items subscription");
       isMounted = false;
       if (channel) {
         try {
