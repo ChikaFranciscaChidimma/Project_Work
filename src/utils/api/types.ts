@@ -96,8 +96,3 @@ export type SubscriptionCallback<T> = (payload: {
   old: T | null; 
   eventType: 'INSERT' | 'UPDATE' | 'DELETE' 
 }) => void;
-
-// Utility function to unsubscribe from a channel
-export const unsubscribe = (channel: RealtimeChannel) => {
-  // We'll implement this in utils.ts
-};
