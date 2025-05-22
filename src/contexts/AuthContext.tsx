@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Find user by email (simple mock authentication)
       const foundUser = mockUsers.find(u => u.email === email);
       
-      if (foundUser && password === "password") {
+      if (foundUser && password === "123") {
         setUser(foundUser);
         localStorage.setItem("branchsync-user", JSON.stringify(foundUser));
         return true;
