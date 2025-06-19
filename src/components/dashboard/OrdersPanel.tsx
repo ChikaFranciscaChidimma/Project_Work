@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { fetchCompletedOrders } from "../../../services/api";
 import { 
   Card, 
   CardContent, 
@@ -24,22 +24,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, ArrowDown, ArrowUp, FileText, Check } from "lucide-react";
+import { Calendar, FileText, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface CompletedOrder {
   id: string;
   orderId: string;
-  productName: string;
   customer: string;
-  date: string;
-  total: number;
   branch: string;
+  date: string;
   status: string;
+  total: number;
+  paymentMethod: string;
+  items: Array<{
+    productId: string;
+    productName: string;
+    price: number;
+    quantity: number;
+    subtotal: number;
+  }>;
+  staff: string;
 }
 
 interface OrdersPanelProps {
@@ -47,60 +55,51 @@ interface OrdersPanelProps {
   branchFilter?: string;
 }
 
+const BRANCHES = [
+  { label: "All Branches", value: "all" },
+  { label: "Branch 1", value: "Branch 1" },
+  { label: "Branch 2", value: "Branch 2" }
+];
+
 const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [branch, setBranch] = useState<string>(branchFilter || "all");
-  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
-  
-  // Load completed orders from localStorage
-  useEffect(() => {
-    const loadOrders = () => {
-      const savedOrders = localStorage.getItem('completed-orders') || '[]';
-      const parsedOrders = JSON.parse(savedOrders);
-      
-      // Map the saved orders to the format we need
-      const formattedOrders: CompletedOrder[] = parsedOrders.map((order: any) => ({
-        id: order.id,
-        orderId: order.orderId,
-        productName: order.productName,
-        customer: order.userName || 'Customer',
-        date: order.date,
-        total: order.total,
-        branch: order.branchName,
-        status: order.status
-      }));
-      
-      setCompletedOrders(formattedOrders);
-    };
-    
-    loadOrders();
-    
-    // Add event listener for storage changes
-    window.addEventListener('storage', loadOrders);
-    
-    return () => {
-      window.removeEventListener('storage', loadOrders);
-    };
-  }, []);
+  const [orders, setOrders] = useState<CompletedOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter orders based on selected filters and branchFilter prop
-  const filteredOrders = completedOrders.filter(order => {
-    // Only show completed orders
-    if (order.status !== "Completed") {
-      return false;
+  // Fetch orders whenever branch changes
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // If branch is "all", don't send a branch param
+        const data = await fetchCompletedOrders(branch !== "all" ? branch : undefined);
+        setOrders(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load orders');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, [branch]);
+
+  // Filter orders based on selected date
+  const filteredOrders = orders.filter(order => {
+    if (order.status.toLowerCase() !== "completed") return false;
+    if (date) {
+      const orderDate = format(new Date(order.date), "yyyy-MM-dd");
+      const selectedDate = format(date, "yyyy-MM-dd");
+      if (orderDate !== selectedDate) return false;
     }
-    
-    // Apply branchFilter prop first (if provided)
-    if (branchFilter && order.branch !== branchFilter) {
-      return false;
-    }
-    
-    // Then apply user-selected filters
-    let matchesBranch = branch === "all" || order.branch === branch;
-    let matchesDate = !date || format(new Date(order.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
-    
-    return matchesBranch && matchesDate;
+    return true;
   });
+
+  if (loading) return <div>Loading orders...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <Card className={compact ? "h-full" : ""}>
@@ -111,8 +110,8 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
             Completed Orders
           </CardTitle>
           <CardDescription>
-            {branchFilter 
-              ? `View completed sales orders for ${branchFilter}` 
+            {branch !== "all"
+              ? `View completed sales orders for ${branch}` 
               : "View completed sales orders across all branches"
             }
           </CardDescription>
@@ -133,7 +132,7 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
       </CardHeader>
       
       <CardContent>
-        {!compact && !branchFilter && (
+        {!compact && (
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="flex-1">
               <Popover>
@@ -164,9 +163,9 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
                   <SelectValue placeholder="Filter by branch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Branches</SelectItem>
-                  <SelectItem value="Branch 1">Branch 1</SelectItem>
-                  <SelectItem value="Branch 2">Branch 2</SelectItem>
+                  {BRANCHES.map(b => (
+                    <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -179,9 +178,11 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Order ID</TableHead>
-                <TableHead>Product</TableHead>
-                {!branchFilter && <TableHead>Branch</TableHead>}
+                <TableHead>Customer</TableHead>
+                {branch === "all" && <TableHead>Branch</TableHead>}
+                <TableHead>Items</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -190,15 +191,27 @@ const OrdersPanel = ({ compact = false, branchFilter }: OrdersPanelProps) => {
                 filteredOrders.slice(0, compact ? 3 : undefined).map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.orderId}</TableCell>
-                    <TableCell>{order.productName}</TableCell>
-                    {!branchFilter && <TableCell>{order.branch}</TableCell>}
+                    <TableCell>{order.customer}</TableCell>
+                    {branch === "all" && <TableCell>{order.branch}</TableCell>}
+                    <TableCell>
+                      {order.items.map((item, i) => (
+                        <div key={i} className="text-sm">
+                          {item.quantity}x {item.productName}
+                        </div>
+                      ))}
+                    </TableCell>
                     <TableCell>{format(new Date(order.date), "MMM d, yyyy")}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {order.paymentMethod.replace('_', ' ')}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={branchFilter ? 4 : 5} className="text-center py-8">
+                  <TableCell colSpan={branch === "all" ? 7 : 6} className="text-center py-8">
                     <p className="text-muted-foreground">No completed orders found.</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Completed orders from the "Record Sale" action will appear here.

@@ -40,3 +40,42 @@
 .read-the-docs {
   color: #888;
 }
+
+/* For better row selection */
+tr:hover {
+  background-color: rgba(253, 230, 138, 0.3) !important; /* amber-200 with 30% opacity */
+  transition: background-color 150ms ease;
+}
+
+.bg-amber-100 {
+  background-color: rgba(253, 230, 138, 0.5) !important; /* amber-200 with 50% opacity */
+  border-left: 2px solid rgba(245, 158, 11, 0.5); /* amber-500 border */
+}
+tr:hover td,
+.bg-amber-100 td {
+  color: var(--foreground) !important; /* Use your theme's foreground color */
+}
+
+
+input[type="checkbox"] {
+  accent-color: rgb(245, 158, 11); /* amber-500 */
+  border-color: rgb(209, 213, 219); /* gray-300 */
+}
+
+input[type="checkbox"]:checked {
+  background-color: rgb(245, 158, 11); /* amber-500 */
+  border-color: rgb(245, 158, 11); /* amber-500 */
+}
+
+.dark tr:hover {
+  background-color: rgba(180, 83, 9, 0.3) !important; /* amber-800 with 30% opacity */
+}
+
+.dark .bg-amber-100 {
+  background-color: rgba(180, 83, 9, 0.5) !important; /* amber-800 with 50% opacity */
+  border-left-color: rgba(245, 158, 11, 0.5); /* amber-500 border */
+}
+.alert-transition {
+  transition: all 0.3s ease-in-out;
+}
+/* For the checkbox styling */

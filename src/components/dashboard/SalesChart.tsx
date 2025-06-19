@@ -11,6 +11,8 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { useEffect, useState } from "react";
+import { fetchSalesData } from "../../../services/api.js";
 
 // Mock data for the sales chart
 const data = [
@@ -84,6 +86,26 @@ const CustomTooltip = ({
 };
 
 const SalesChart = () => {
+  const [salesData, setSalesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+   useEffect(() => {
+    const loadSalesData = async () => {
+      try {
+        const data = await fetchSalesData('weekly');
+        setSalesData(data);
+      } catch (error) {
+        console.error("Error loading sales data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSalesData();
+  }, []);
+
+  if (loading) return <div>Loading sales data...</div>;
+
   return (
     <Card className="col-span-7">
       <CardHeader className="pb-3">
@@ -109,7 +131,7 @@ const SalesChart = () => {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data}
+              data={salesData}
               margin={{
                 top: 5,
                 right: 5,

@@ -1,54 +1,18 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
 import { Alert, AlertDescription } from "../ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchInventory } from "../../../services/api";
 
-// Mock inventory data
-const inventoryItems = [
-  {
-    id: 1,
-    name: "Wireless Keyboard",
-    currentStock: 5,
-    lowStockThreshold: 10,
-    totalStock: 50,
-    status: "low", // low, optimal, overstocked
-  },
-  {
-    id: 2,
-    name: "HD Monitor 24\"",
-    currentStock: 12,
-    lowStockThreshold: 8,
-    totalStock: 40,
-    status: "optimal",
-  },
-  {
-    id: 3,
-    name: "Wireless Mouse",
-    currentStock: 8,
-    lowStockThreshold: 10,
-    totalStock: 50,
-    status: "low",
-  },
-  {
-    id: 4,
-    name: "USB-C Cable 1m",
-    currentStock: 4,
-    lowStockThreshold: 15,
-    totalStock: 100,
-    status: "low",
-  },
-  {
-    id: 5,
-    name: "Laptop Sleeve 15\"",
-    currentStock: 25,
-    lowStockThreshold: 10,
-    totalStock: 50,
-    status: "optimal",
-  },
-];
+// Helper to determine status for progress color and badge
+const getStatus = (stock: number, minStock: number) => {
+  if (stock === 0) return "low";
+  if (stock <= minStock) return "low";
+  if (stock > minStock && stock <= minStock * 2) return "optimal";
+  return "overstocked";
+};
 
 const calculateProgressColor = (status: string) => {
   switch (status) {
@@ -63,8 +27,65 @@ const calculateProgressColor = (status: string) => {
   }
 };
 
+interface InventoryStatusItem {
+  id: string;
+  name: string;
+  stock: number;
+  minStock: number;
+  branch: string;
+  price: number;
+  status: "low" | "optimal" | "overstocked";
+  totalStock: number; // For progress bar, you may define this as max(stock, minStock*2) or a static value
+}
+
 const InventoryStatus = () => {
-  // Count low stock items
+  const [inventoryItems, setInventoryItems] = useState<InventoryStatusItem[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+  const loadInventory = async () => {
+    try {
+      console.log('Starting inventory fetch...'); // Debug
+      setLoading(true);
+      setError(null);
+      const items = await fetchInventory();
+      console.log('Received items:', items); // Debug
+      
+      if (!items || items.length === 0) {
+        console.warn('Received empty items array'); // Debug
+      }
+
+      const mapped: InventoryStatusItem[] = items.map((item: any) => {
+        const totalStock = Math.max(item.stock, item.minStock * 2, 10);
+        const status = getStatus(item.stock, item.minStock);
+        return {
+          id: item.id || item._id,
+          name: item.name,
+          stock: item.stock,
+          minStock: item.minStock,
+          branch: item.branch,
+          price: item.price,
+          status,
+          totalStock,
+        };
+      });
+      
+      console.log('Mapped inventory items:', mapped); // Debug
+      setInventoryItems(mapped);
+    } catch (err: any) {
+      console.error('Inventory fetch error:', err); // Debug
+      setError(err.message || "Failed to load inventory status.");
+    } finally {
+      console.log('Inventory fetch completed'); // Debug
+      setLoading(false);
+    }
+  };
+  loadInventory();
+}, []);
+
   const lowStockCount = inventoryItems.filter(
     (item) => item.status === "low"
   ).length;
@@ -83,59 +104,91 @@ const InventoryStatus = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {lowStockCount > 0 && (
-          <Alert className="mb-4 bg-warning/10 border-warning/20 text-warning">
+        {error && (
+          <Alert className="mb-4 bg-destructive/10 border-destructive/20 text-destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Some items are below the recommended stock levels. Consider restocking soon.
-            </AlertDescription>
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+        {loading ? (
+          <div className="py-4 text-muted-foreground">
+            Loading inventory status...
+          </div>
+        ) : (
+          <>
+            {lowStockCount > 0 && (
+              <Alert className="mb-4 bg-warning/10 border-warning/20 text-warning">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Some items are below the recommended stock levels. Consider
+                  restocking soon.
+                </AlertDescription>
+              </Alert>
+            )}
 
-        <div className="space-y-4">
-          {inventoryItems.map((item) => {
-            const stockPercentage = Math.round(
-              (item.currentStock / item.totalStock) * 100
-            );
-            const progressColor = calculateProgressColor(item.status);
-
-            return (
-              <div key={item.id} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{item.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "text-xs font-medium rounded-full px-2 py-0.5",
-                        item.status === "low"
-                          ? "bg-warning/20 text-warning"
-                          : item.status === "optimal"
-                          ? "bg-success/20 text-success"
-                          : "bg-info/20 text-info"
-                      )}
-                    >
-                      {item.currentStock} in stock
-                    </span>
+            <div className="space-y-4">
+              {inventoryItems.map((item) => {
+                const stockPercentage = item.totalStock
+                  ? Math.round((item.stock / item.totalStock) * 100)
+                  : 0;
+                return (
+                  <div key={item.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{item.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "text-xs font-medium rounded-full px-2 py-0.5",
+                            calculateProgressColor(item.status) +
+                              "/20 text-" +
+                              (item.status === "low"
+                                ? "warning"
+                                : item.status === "optimal"
+                                ? "success"
+                                : "info")
+                          )}
+                        >
+                          {item.stock} in stock
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          Min: {item.minStock}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Progress
+                        value={stockPercentage}
+                        className={cn(
+                          "h-2",
+                          calculateProgressColor(item.status)
+                        )}
+                        style={
+                          {
+                            "--progress-indicator-color": `hsl(var(--${
+                              item.status === "low"
+                                ? "warning"
+                                : item.status === "optimal"
+                                ? "success"
+                                : "info"
+                            }))`,
+                          } as React.CSSProperties
+                        }
+                      />
+                      <span className="text-xs text-muted-foreground min-w-[40px]">
+                        {stockPercentage}%
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Progress 
-                    value={stockPercentage} 
-                    className={cn("h-2", item.status === "low" ? "bg-warning/20" : "bg-success/20")}
-                    style={{
-                      "--progress-indicator-color": `hsl(var(--${item.status === "low" ? "warning" : "success"}))`
-                    } as React.CSSProperties}
-                  />
-                  <span className="text-xs text-muted-foreground min-w-[40px]">{stockPercentage}%</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-border">
-          <button className="text-sm text-primary hover:underline">View All Inventory Items</button>
-        </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 pt-4 border-t border-border">
+              <button className="text-sm text-primary hover:underline">
+                View All Inventory Items
+              </button>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
